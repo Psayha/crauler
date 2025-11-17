@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database - Updated November 2025
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: ai-agency-postgres
     environment:
       POSTGRES_DB: ai_agency
@@ -18,10 +18,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  # Redis
+  # Redis - Updated November 2025
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: ai-agency-redis
     ports:
       - "6379:6379"
@@ -32,8 +33,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  # Backend API
+  # Backend API - Updated November 2025
   backend:
     build:
       context: ./backend
@@ -42,10 +44,21 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Database
       DATABASE_URL: postgresql+asyncpg://aiagency:securepassword@postgres:5432/ai_agency
       REDIS_URL: redis://redis:6379
+
+      # API Keys
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+
+      # JWT
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production}
+
+      # App Config
       DEBUG: "true"
+      APP_NAME: "AI Agency"
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:8000"]'
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,7 +66,8 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
-    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    command: fastapi dev app/main.py --host 0.0.0.0 --port 8000
+    restart: unless-stopped
 
   # Celery Worker (for future use)
   # celery:
