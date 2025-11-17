@@ -53,7 +53,7 @@ class AgentPerformanceMetric(Base, TimestampMixin):
             "failed_tasks": self.failed_tasks,
             "avg_execution_time_ms": self.avg_execution_time_ms,
             "total_tokens_used": self.total_tokens_used,
-            "metadata": self.metadata,
+            "metadata": self.analytics_metadata,  # Use renamed column
             "created_at": self.created_at.isoformat(),
         }
 
@@ -107,7 +107,7 @@ class AgentImprovement(Base, TimestampMixin):
             "status": self.status,
             "approved_by": str(self.approved_by) if self.approved_by else None,
             "approved_at": self.approved_at.isoformat() if self.approved_at else None,
-            "metadata": self.metadata,
+            "metadata": self.analytics_metadata,  # Use renamed column
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
@@ -188,7 +188,7 @@ class DynamicAgent(Base, TimestampMixin):
             "avg_quality_score": self.avg_quality_score,
             "activated_at": self.activated_at.isoformat() if self.activated_at else None,
             "deprecated_at": self.deprecated_at.isoformat() if self.deprecated_at else None,
-            "metadata": self.metadata,
+            "metadata": self.analytics_metadata,  # Use renamed column
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
