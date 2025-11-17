@@ -21,9 +21,11 @@ class ProjectStatus(str, enum.Enum):
     """Project status enumeration"""
     DRAFT = "draft"
     PLANNING = "planning"
+    READY = "ready"
     IN_PROGRESS = "in_progress"
     REVIEW = "review"
     COMPLETED = "completed"
+    FAILED = "failed"
     CANCELLED = "cancelled"
 
 
@@ -41,6 +43,8 @@ class Project(Base, TimestampMixin):
     type = Column(SQLEnum(ProjectType), nullable=False)
     priority = Column(String(20), default="normal")  # critical, high, normal, low
     deadline = Column(DateTime, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
     project_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved name
 
     # Relationships

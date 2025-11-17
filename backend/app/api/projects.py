@@ -9,7 +9,7 @@ from app.agents.orchestrator import orchestrator
 from app.models.project import Project, ProjectStatus, ProjectType
 from app.models.task import Task
 from app.database.connection import get_db
-from app.services.agent_executor import agent_executor
+from app.services.orchestrator_service import orchestrator_service
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ async def create_project(request: ProjectCreateRequest):
             status=project.status.value,
             type=project.type.value,
             priority=project.priority,
-            estimated_hours=project.metadata.get("estimated_hours"),
+            estimated_hours=project.project_metadata.get("estimated_hours") if project.project_metadata else None,
         )
 
     except Exception as e:
@@ -120,7 +120,7 @@ async def get_project(project_id: str):
                 status=project.status.value,
                 type=project.type.value,
                 priority=project.priority,
-                estimated_hours=project.metadata.get("estimated_hours"),
+                estimated_hours=project.project_metadata.get("estimated_hours") if project.project_metadata else None,
                 tasks=[
                     TaskResponse(
                         id=str(task.id),
@@ -132,7 +132,7 @@ async def get_project(project_id: str):
                     )
                     for task in project.tasks
                 ],
-                metadata=project.metadata,
+                metadata=project.project_metadata,
             )
 
     except HTTPException:
@@ -191,44 +191,66 @@ async def execute_project(project_id: str):
 
     This will:
     1. Validate project status
-    2. Update to IN_PROGRESS
-    3. Execute all tasks with agents in order
-    4. Update project status based on results
+    2. Execute all tasks with intelligent dependency management
+    3. Run tasks in parallel where possible
+    4. Track progress in real-time
+    5. Aggregate results
     """
     try:
         async with get_db() as db:
-            result = await db.execute(
-                select(Project).where(Project.id == project_id)
-            )
-            project = result.scalar_one_or_none()
+            result = await orchestrator_service.execute_project(project_id, db)
 
-            if not project:
-                raise HTTPException(status_code=404, detail="Project not found")
+        return result
 
-            if project.status != ProjectStatus.PLANNING:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Project must be in PLANNING status, currently: {project.status.value}",
-                )
-
-            # Update status to in_progress
-            project.status = ProjectStatus.IN_PROGRESS
-            await db.commit()
-
-            logger.info(f"Started execution of project {project_id}")
-
-        # Execute project with agent executor
-        execution_result = await agent_executor.execute_project(project_id)
-
-        return {
-            "status": "completed",
-            "project_id": str(project_id),
-            "message": "Project execution completed",
-            "result": execution_result,
-        }
-
-    except HTTPException:
-        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to execute project: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{project_id}/status")
+async def get_project_status(project_id: str):
+    """
+    Get current project execution status
+
+    Returns:
+    - Project status
+    - Task breakdown by status
+    - Timestamps
+    """
+    try:
+        async with get_db() as db:
+            status = await orchestrator_service.get_project_status(project_id, db)
+
+        return status
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get project status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{project_id}/progress")
+async def get_project_progress(project_id: str):
+    """
+    Get detailed project progress
+
+    Returns:
+    - Progress percentage
+    - Task counts by status
+    - Token usage
+    - Tasks grouped by agent
+    """
+    try:
+        async with get_db() as db:
+            progress = await orchestrator_service.get_project_progress(project_id, db)
+
+        return progress
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get project progress: {e}")
         raise HTTPException(status_code=500, detail=str(e))
