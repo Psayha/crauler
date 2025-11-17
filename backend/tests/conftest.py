@@ -70,6 +70,22 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+@pytest.fixture(scope="function", autouse=True)
+async def setup_test_database():
+    """Setup test database before each test."""
+    from app.database.connection import engine as app_engine
+
+    # Create all tables using the app's engine
+    async with app_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield
+
+    # Clean up after test
+    async with app_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
 @pytest.fixture(scope="function")
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create test HTTP client."""
