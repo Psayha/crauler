@@ -35,7 +35,7 @@ AI Agency - это система из специализированных AI-�
 
 ```
 ┌─────────────────────────────────────┐
-│   Telegram Mini App (Next.js 14)   │
+│   Telegram Mini App (Next.js 15)   │
 │   ┌───────────────────────────┐     │
 │   │  Dashboard, Projects,     │     │
 │   │  Real-time Updates        │     │
@@ -52,7 +52,7 @@ AI Agency - это система из специализированных AI-�
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────▼───────────────────┐
-│   PostgreSQL + Redis                │
+│   PostgreSQL 17 + Redis 8           │
 └─────────────────────────────────────┘
 ```
 
@@ -63,8 +63,10 @@ AI Agency - это система из специализированных AI-�
 - Docker и Docker Compose
 - Claude API ключ (от Anthropic)
 - Telegram Bot Token (для Mini App)
-- Python 3.11+ (для локальной разработки)
-- Node.js 20+ (для frontend разработки)
+- Python 3.13+ (для локальной разработки)
+- Node.js 20+ и npm 10+ (для frontend разработки)
+- PostgreSQL 17 (используется в Docker)
+- Redis 8 (используется в Docker)
 
 ### Установка
 
