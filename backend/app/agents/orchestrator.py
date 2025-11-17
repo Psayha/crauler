@@ -262,5 +262,8 @@ Guidelines:
         return TaskPriority.NORMAL
 
 
+# Export alias for backwards compatibility with tests
+Orchestrator = OrchestratorAgent
+
 # Global instance
 orchestrator = OrchestratorAgent()
