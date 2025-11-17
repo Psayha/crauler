@@ -10,7 +10,7 @@ python-telegram-bot==21.10
 # Database - Updated November 2025
 sqlalchemy==2.0.44
 asyncpg==0.30.0
-alembic==1.14.2
+alembic==1.17.2
 redis==5.2.2
 
 # Task Queue - Updated November 2025
