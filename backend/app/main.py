@@ -5,7 +5,7 @@ import logging
 
 from app.config import settings
 from app.database.connection import init_db
-from app.api import projects, tasks, agents, auth
+from app.api import projects, tasks, agents, auth, hr
 from app.websockets import routes as ws_routes
 
 # Setup logging
@@ -50,6 +50,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
+app.include_router(hr.router, prefix="/api/hr", tags=["HR Agent"])
 app.include_router(ws_routes.router, tags=["WebSocket"])
 
 

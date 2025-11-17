@@ -4,6 +4,7 @@ from .project import Project, ProjectType, ProjectStatus
 from .task import Task, TaskStatus, TaskPriority
 from .agent_execution import AgentExecution
 from .user import User, UserSettings, Notification
+from .agent_analytics import AgentPerformanceMetric, AgentImprovement, DynamicAgent
 
 __all__ = [
     "Base",
@@ -18,4 +19,7 @@ __all__ = [
     "User",
     "UserSettings",
     "Notification",
+    "AgentPerformanceMetric",
+    "AgentImprovement",
+    "DynamicAgent",
 ]
