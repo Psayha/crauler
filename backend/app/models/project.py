@@ -41,7 +41,7 @@ class Project(Base, TimestampMixin):
     type = Column(SQLEnum(ProjectType), nullable=False)
     priority = Column(String(20), default="normal")  # critical, high, normal, low
     deadline = Column(DateTime, nullable=True)
-    metadata = Column(JSONB, default={})
+    project_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved name
 
     # Relationships
     organization = relationship("Organization", back_populates="projects")
