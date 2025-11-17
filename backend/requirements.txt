@@ -1,41 +1,37 @@
-# Core - Updated November 2025
-fastapi==0.121.2
-uvicorn[standard]==0.38.0
+# Core - Stable versions for Python 3.12
+fastapi==0.115.0
+uvicorn[standard]==0.31.1
 python-dotenv==1.0.1
-pydantic==2.12.3
-pydantic-settings==2.7.1
-websockets==14.0
-python-telegram-bot==21.10
+pydantic==2.9.2
+pydantic-settings==2.6.0
+websockets==13.1
+python-telegram-bot==21.7
 
-# Database - Updated November 2025
-sqlalchemy==2.0.44
-asyncpg==0.30.0
-alembic==1.17.2
-redis==5.2.2
+# Database - Stable versions
+sqlalchemy==2.0.36
+asyncpg==0.29.0
+alembic==1.13.3
+redis==5.2.1
 
-# Task Queue - Updated November 2025
-celery[redis]==5.5.3
+# Task Queue - Stable
+celery[redis]==5.4.0
 
-# AI/ML - Updated November 2025
-anthropic==0.73.0
-openai==1.59.0
-langchain==0.3.17
-langchain-community==0.3.17
-langchain-openai==0.3.1
-pinecone-client==5.0.1
+# AI/ML - Only core (remove problematic packages)
+anthropic==0.39.0
+httpx==0.27.2
 
-# Utils - Updated November 2025
-httpx==0.28.1
-python-multipart==0.0.20
+# Utils
+python-multipart==0.0.12
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 email-validator==2.2.0
 
-# Monitoring - Updated November 2025
+# Monitoring (optional)
 prometheus-fastapi-instrumentator==7.0.0
-sentry-sdk==2.21.0
+sentry-sdk==2.18.0
 
-# Testing - Updated November 2025
+# Testing
 pytest==8.3.4
-pytest-asyncio==0.25.2
+pytest-asyncio==0.24.0
 pytest-cov==6.0.0
+aiosqlite==0.20.0

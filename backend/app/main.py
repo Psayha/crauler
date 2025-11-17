@@ -8,6 +8,16 @@ from app.database.connection import init_db
 from app.api import projects, tasks, agents, auth, hr
 from app.websockets import routes as ws_routes
 
+# Import all models to ensure they're registered with Base.metadata BEFORE init_db()
+from app.models import (  # noqa: F401
+    User, UserSettings, Notification,
+    Organization,
+    Project, ProjectType, ProjectStatus,
+    Task, TaskStatus, TaskPriority,
+    AgentExecution,
+    AgentPerformanceMetric, AgentImprovement, DynamicAgent,
+)
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,

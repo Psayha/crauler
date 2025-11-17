@@ -16,6 +16,9 @@ eggs/
 lib/
 lib64/
 parts/
+
+# Exception: Don't ignore frontend source lib directory
+!frontend/lib/
 sdist/
 var/
 wheels/

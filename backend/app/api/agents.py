@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/")
-async def list_agents() -> Dict[str, Any]:
+@router.get("", response_model=List[Dict[str, Any]])
+async def list_agents() -> List[Dict[str, Any]]:
     """
     List all available AI agents
 
@@ -24,32 +24,47 @@ async def list_agents() -> Dict[str, Any]:
     for agent_type in agents:
         agent = agent_registry.get_agent(agent_type)
 
-        # Determine agent role/description
-        role_map = {
-            "marketing": "Chief Marketing Officer - Marketing strategies & growth",
-            "frontend_developer": "Senior Frontend Developer - React/Next.js expert",
-            "backend_developer": "Senior Backend Developer - API & system architecture",
-            "data_analyst": "Senior Data Analyst - Data analysis & BI",
-            "ux_designer": "Senior UX/UI Designer - User experience & design",
-            "content_writer": "Senior Content Writer - SEO & copywriting",
-            "mobile_developer": "Senior Mobile Developer - iOS/Android/Cross-platform",
-            "devops_engineer": "Senior DevOps Engineer - Infrastructure & CI/CD",
-            "project_manager": "Senior Project Manager - Planning & coordination",
-            "qa_engineer": "Senior QA Engineer - Testing & quality assurance",
+        # Determine agent name/description
+        name_map = {
+            "marketing": "Chief Marketing Officer",
+            "frontend_developer": "Senior Frontend Developer",
+            "backend_developer": "Senior Backend Developer",
+            "data_analyst": "Senior Data Analyst",
+            "ux_designer": "Senior UX/UI Designer",
+            "content_writer": "Senior Content Writer",
+            "mobile_developer": "Senior Mobile Developer",
+            "devops_engineer": "Senior DevOps Engineer",
+            "project_manager": "Senior Project Manager",
+            "qa_engineer": "Senior QA Engineer",
+            "hr_manager": "HR Manager",
+            "orchestrator": "AI Agency Orchestrator",
+        }
+
+        description_map = {
+            "marketing": "Marketing strategies & growth",
+            "frontend_developer": "React/Next.js expert",
+            "backend_developer": "API & system architecture",
+            "data_analyst": "Data analysis & BI",
+            "ux_designer": "User experience & design",
+            "content_writer": "SEO & copywriting",
+            "mobile_developer": "iOS/Android/Cross-platform",
+            "devops_engineer": "Infrastructure & CI/CD",
+            "project_manager": "Planning & coordination",
+            "qa_engineer": "Testing & quality assurance",
+            "hr_manager": "Agent performance & optimization",
+            "orchestrator": "Project coordination & task delegation",
         }
 
         agent_info.append(
             {
-                "agent_type": agent_type,
-                "role": role_map.get(agent_type, "Specialized Agent"),
+                "type": agent_type,
+                "name": name_map.get(agent_type, "Specialized Agent"),
+                "description": description_map.get(agent_type, "AI specialist"),
                 "temperature": agent.temperature,
             }
         )
 
-    return {
-        "total_agents": len(agents),
-        "agents": agent_info,
-    }
+    return agent_info
 
 
 @router.get("/{agent_type}")
@@ -65,14 +80,32 @@ async def get_agent_info(agent_type: str) -> Dict[str, Any]:
     if not agent:
         return {"error": f"Agent type '{agent_type}' not found"}
 
-    # Extract first few lines of system prompt as description
+    # Agent names and descriptions
+    name_map = {
+        "marketing": "Chief Marketing Officer",
+        "frontend_developer": "Senior Frontend Developer",
+        "backend_developer": "Senior Backend Developer",
+        "data_analyst": "Senior Data Analyst",
+        "ux_designer": "Senior UX/UI Designer",
+        "content_writer": "Senior Content Writer",
+        "mobile_developer": "Senior Mobile Developer",
+        "devops_engineer": "Senior DevOps Engineer",
+        "project_manager": "Senior Project Manager",
+        "qa_engineer": "Senior QA Engineer",
+        "hr_manager": "HR Manager",
+        "orchestrator": "AI Agency Orchestrator",
+    }
+
+    # Extract first few lines of system prompt as expertise
     system_prompt = agent.system_prompt
-    description_lines = system_prompt.split("\n")[:3]
-    description = " ".join(description_lines)
+    expertise_lines = [line.strip() for line in system_prompt.split("\n") if line.strip()][:5]
+    expertise = expertise_lines
 
     return {
-        "agent_type": agent_type,
-        "description": description,
+        "type": agent_type,
+        "name": name_map.get(agent_type, "Specialized Agent"),
+        "description": f"{name_map.get(agent_type, 'Agent')} specializing in {agent_type.replace('_', ' ')}",
+        "expertise": expertise,
         "temperature": agent.temperature,
         "available": True,
     }

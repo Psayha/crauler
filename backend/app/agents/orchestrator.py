@@ -10,21 +10,27 @@ from app.models.project import Project, ProjectType, ProjectStatus
 from app.models.task import Task, TaskStatus, TaskPriority
 from app.database.connection import get_db
 from sqlalchemy import select
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
-class OrchestratorAgent:
+class OrchestratorAgent(BaseAgent):
     """
     Main orchestrator for AI Agency
     Acts as CEO/Product Manager coordinating all agents
     """
 
-    def __init__(self):
-        self.system_prompt = self._build_system_prompt()
+    def get_agent_type(self) -> str:
+        """Return agent type identifier"""
+        return "orchestrator"
 
-    def _build_system_prompt(self) -> str:
-        """Build system prompt for orchestrator"""
+    def get_temperature(self) -> float:
+        """Return temperature for Claude API calls"""
+        return 0.5
+
+    def get_system_prompt(self) -> str:
+        """Return system prompt for orchestrator"""
         return """You are the CEO and Chief Orchestrator of an AI Agency.
 
 Your role is to:
@@ -261,6 +267,9 @@ Guidelines:
 
         return TaskPriority.NORMAL
 
+
+# Export alias for backwards compatibility with tests
+Orchestrator = OrchestratorAgent
 
 # Global instance
 orchestrator = OrchestratorAgent()

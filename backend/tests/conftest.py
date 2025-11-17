@@ -1,6 +1,7 @@
 """Pytest configuration and fixtures."""
 import pytest
 import asyncio
+import os
 from typing import AsyncGenerator, Generator
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -9,21 +10,33 @@ from app.main import app
 from app.database.base import Base
 from app.config import settings
 
+# Import all models to ensure they're registered with Base.metadata
+from app.models import (  # noqa: F401
+    User, UserSettings, Notification,
+    Organization,
+    Project, ProjectType, ProjectStatus,
+    Task, TaskStatus, TaskPriority,
+    AgentExecution,
+    AgentPerformanceMetric, AgentImprovement, DynamicAgent,
+)
 
-# Test database URL (use in-memory SQLite for tests)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+# Test database URL - use PostgreSQL from env (CI provides it) or settings
+# Models use JSONB which requires PostgreSQL, not SQLite
+TEST_DATABASE_URL = os.getenv("DATABASE_URL") or settings.database_url
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> Generator:
+def event_loop():
     """Create event loop for async tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
 
 @pytest.fixture(scope="function")
-async def test_db_engine():
+async def db_engine():
     """Create test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
@@ -45,16 +58,32 @@ async def test_db_engine():
 
 
 @pytest.fixture(scope="function")
-async def db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
     async_session = async_sessionmaker(
-        test_db_engine,
+        db_engine,
         class_=AsyncSession,
         expire_on_commit=False,
     )
 
     async with async_session() as session:
         yield session
+
+
+@pytest.fixture(scope="function", autouse=True)
+async def setup_test_database():
+    """Setup test database before each test."""
+    from app.database.connection import engine as app_engine
+
+    # Create all tables using the app's engine
+    async with app_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield
+
+    # Clean up after test
+    async with app_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")

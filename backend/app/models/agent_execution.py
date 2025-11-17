@@ -24,7 +24,7 @@ class AgentExecution(Base, TimestampMixin):
     status = Column(String(50), default="pending")
     error_message = Column(Text, nullable=True)
 
-    metadata = Column(JSONB, default={})
+    execution_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved name
 
     # Relationships
     task = relationship("Task", back_populates="executions")
