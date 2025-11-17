@@ -3,7 +3,7 @@ fastapi==0.121.2
 uvicorn[standard]==0.38.0
 python-dotenv==1.0.1
 pydantic==2.12.3
-pydantic-settings==2.7.2
+pydantic-settings==2.7.1
 websockets==14.0
 python-telegram-bot==21.10
 
