@@ -10,17 +10,24 @@ from app.models.project import Project, ProjectType, ProjectStatus
 from app.models.task import Task, TaskStatus, TaskPriority
 from app.database.connection import get_db
 from sqlalchemy import select
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
-class OrchestratorAgent:
+class OrchestratorAgent(BaseAgent):
     """
     Main orchestrator for AI Agency
     Acts as CEO/Product Manager coordinating all agents
     """
 
     def __init__(self):
+        super().__init__(
+            agent_type="orchestrator",
+            name="AI Agency Orchestrator",
+            description="Main coordinator managing all specialist agents",
+            temperature=0.5
+        )
         self.system_prompt = self._build_system_prompt()
 
     def _build_system_prompt(self) -> str:

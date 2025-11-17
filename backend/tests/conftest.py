@@ -1,6 +1,7 @@
 """Pytest configuration and fixtures."""
 import pytest
 import asyncio
+import os
 from typing import AsyncGenerator, Generator
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -20,8 +21,9 @@ from app.models import (  # noqa: F401
 )
 
 
-# Test database URL (use in-memory SQLite for tests)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URL - use PostgreSQL from env (CI provides it) or settings
+# Models use JSONB which requires PostgreSQL, not SQLite
+TEST_DATABASE_URL = os.getenv("DATABASE_URL") or settings.database_url
 
 
 @pytest.fixture(scope="session")
