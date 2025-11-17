@@ -477,3 +477,313 @@ FRONTEND_URL=https://your-mini-app.vercel.app
 ---
 
 **Next Step:** Начинаем с Telegram authentication в backend и базовой структуры Mini App! 🚀
+
+
+## 🔄 Phase 3: HR Agent - Agent Management System
+
+### Overview
+
+HR Agent - специальный мета-агент для управления и развития команды AI агентов.
+
+### 3.1 Функциональность HR Agent
+
+#### 1. Повышение квалификации агентов (Agent Upskilling)
+
+**Цель:** Улучшение производительности и точности работы существующих агентов.
+
+**Функции:**
+- **Анализ производительности:**
+  - Сбор метрик выполнения задач каждым агентом
+  - Анализ успешности выполнения (success rate)
+  - Выявление типичных ошибок и недочетов
+  - Сравнение с ожидаемыми результатами
+
+- **Оптимизация параметров:**
+  - Тюнинг temperature для баланса креативности/точности
+  - Корректировка system prompts
+  - A/B тестирование различных версий промптов
+  - Адаптация под специфику проектов
+
+- **Генерация рекомендаций:**
+  - Предложения по улучшению промптов
+  - Рекомендации по дополнительному контексту
+  - Советы по лучшим практикам для каждого типа задач
+
+**Технические детали:**
+```python
+# backend/app/agents/hr_agent.py
+class HRAgent(BaseAgent):
+    def get_agent_type(self) -> str:
+        return "hr_manager"
+    
+    def get_temperature(self) -> float:
+        return 0.4  # Баланс между аналитикой и креативностью
+    
+    async def analyze_agent_performance(
+        self, 
+        agent_type: str, 
+        time_period: str = "30d"
+    ) -> AgentPerformanceReport:
+        # Анализ метрик агента за период
+        pass
+    
+    async def suggest_improvements(
+        self, 
+        agent_type: str, 
+        performance_report: AgentPerformanceReport
+    ) -> List[ImprovementSuggestion]:
+        # Генерация рекомендаций по улучшению
+        pass
+    
+    async def test_agent_variant(
+        self,
+        agent_type: str,
+        variant_config: AgentConfig,
+        test_tasks: List[Task]
+    ) -> VariantTestResults:
+        # A/B тестирование новой версии агента
+        pass
+```
+
+#### 2. Найм новых агентов (Agent Recruitment)
+
+**Цель:** Динамическое расширение команды агентов под потребности проекта.
+
+**Функции:**
+- **Анализ потребностей:**
+  - Определение пробелов в текущей команде
+  - Анализ типов задач, которые плохо покрываются
+  - Выявление необходимых специализаций
+
+- **Создание нового агента:**
+  - Генерация специализации и экспертизы
+  - Создание system prompt с использованием Orchestrator
+  - Определение оптимальной temperature
+  - Генерация примеров работы
+
+- **Валидация и тестирование:**
+  - Тестовые задачи для нового агента
+  - Оценка качества результатов
+  - Сравнение с существующими агентами
+  - Принятие решения о добавлении в команду
+
+**Процесс создания нового агента:**
+```
+1. HR Agent анализирует проект и выявляет потребность
+2. Orchestrator формулирует требования к новому агенту
+3. Команда существующих агентов создает:
+   - Marketing: позиционирование нового агента
+   - Content Writer: документация и описание
+   - Backend Developer: структура кода агента
+   - QA Engineer: тестовые сценарии
+4. HR Agent генерирует финальный промпт
+5. DevOps Engineer интегрирует в систему
+6. Тестирование на реальных задачах
+7. Добавление в AgentRegistry
+```
+
+**Технические детали:**
+```python
+# backend/app/agents/hr_agent.py (продолжение)
+
+async def identify_skill_gaps(
+    self,
+    project: Project
+) -> List[SkillGap]:
+    # Анализ проекта и выявление недостающих навыков
+    pass
+
+async def recruit_new_agent(
+    self,
+    skill_requirements: SkillRequirements,
+    orchestrator: Orchestrator
+) -> NewAgentBlueprint:
+    # Создание чертежа нового агента
+    # Использует всю команду для генерации
+    pass
+
+async def validate_new_agent(
+    self,
+    agent_blueprint: NewAgentBlueprint,
+    test_tasks: List[Task]
+) -> ValidationReport:
+    # Тестирование нового агента
+    pass
+
+async def integrate_agent(
+    self,
+    agent_blueprint: NewAgentBlueprint,
+    validation_report: ValidationReport
+) -> Agent:
+    # Интеграция агента в систему
+    # Создание файла агента
+    # Обновление AgentRegistry
+    pass
+```
+
+### 3.2 Модели данных
+
+```python
+# backend/app/models/agent_analytics.py
+
+class AgentPerformanceMetric(Base, TimestampMixin):
+    """Метрики производительности агента"""
+    __tablename__ = "agent_performance_metrics"
+    
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    agent_type = Column(String(100), nullable=False)
+    metric_type = Column(String(50))  # success_rate, avg_time, quality_score
+    metric_value = Column(Float)
+    period_start = Column(DateTime)
+    period_end = Column(DateTime)
+    metadata = Column(JSONB, default={})
+
+class AgentImprovement(Base, TimestampMixin):
+    """История улучшений агентов"""
+    __tablename__ = "agent_improvements"
+    
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    agent_type = Column(String(100), nullable=False)
+    improvement_type = Column(String(50))  # prompt_update, temperature_change, etc
+    previous_config = Column(JSONB)
+    new_config = Column(JSONB)
+    test_results = Column(JSONB)
+    status = Column(String(20))  # testing, approved, rejected, active
+    approved_by = Column(UUID, ForeignKey("users.id"))
+
+class DynamicAgent(Base, TimestampMixin):
+    """Динамически созданные агенты"""
+    __tablename__ = "dynamic_agents"
+    
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    agent_type = Column(String(100), unique=True, nullable=False)
+    name = Column(String(255))
+    description = Column(Text)
+    system_prompt = Column(Text, nullable=False)
+    temperature = Column(Float, default=0.5)
+    expertise = Column(ARRAY(String))
+    created_by_project_id = Column(UUID, ForeignKey("projects.id"))
+    validation_score = Column(Float)
+    status = Column(String(20))  # active, testing, deprecated
+    usage_count = Column(Integer, default=0)
+    success_rate = Column(Float)
+```
+
+### 3.3 API Endpoints
+
+```python
+# backend/app/api/hr.py
+
+@router.get("/api/hr/agent-performance/{agent_type}")
+async def get_agent_performance(agent_type: str, period: str = "30d"):
+    # Получить метрики производительности агента
+    pass
+
+@router.post("/api/hr/analyze-agent/{agent_type}")
+async def analyze_agent(agent_type: str):
+    # Запустить анализ агента HR агентом
+    pass
+
+@router.post("/api/hr/suggest-improvements/{agent_type}")
+async def suggest_improvements(agent_type: str):
+    # Получить рекомендации по улучшению
+    pass
+
+@router.post("/api/hr/test-improvement/{agent_type}")
+async def test_improvement(agent_type: str, config: AgentConfig):
+    # Протестировать новую конфигурацию агента
+    pass
+
+@router.post("/api/hr/recruit-agent")
+async def recruit_agent(requirements: SkillRequirements):
+    # Создать нового агента
+    pass
+
+@router.get("/api/hr/dynamic-agents")
+async def list_dynamic_agents():
+    # Список динамически созданных агентов
+    pass
+
+@router.delete("/api/hr/dynamic-agents/{agent_id}")
+async def remove_dynamic_agent(agent_id: str):
+    # Удалить динамического агента
+    pass
+```
+
+### 3.4 Telegram Mini App Integration
+
+**Экран HR Dashboard:**
+- Список всех агентов с метриками
+- Графики производительности
+- Рекомендации по улучшению
+- Кнопка "Нанять нового агента"
+- История улучшений
+
+**Процесс найма через UI:**
+1. Пользователь нажимает "Нанять агента"
+2. Описывает требования к агенту
+3. HR Agent анализирует и создает чертеж
+4. Показывает предпросмотр нового агента
+5. Запускает тестирование
+6. Показывает результаты
+7. Пользователь подтверждает добавление
+
+### 3.5 Приоритет реализации
+
+**Этап 1 (MVP):**
+- ✅ Базовая структура HR Agent
+- ✅ Сбор метрик производительности
+- ✅ Простой анализ и рекомендации
+
+**Этап 2 (Advanced):**
+- ⏳ A/B тестирование конфигураций
+- ⏳ Автоматическое применение улучшений
+- ⏳ Создание динамических агентов
+
+**Этап 3 (Expert):**
+- ⏳ Машинное обучение для оптимизации
+- ⏳ Автономное управление командой
+- ⏳ Предиктивная аналитика потребностей
+
+### 3.6 Метрики успеха
+
+**Для повышения квалификации:**
+- Увеличение success rate агентов на 15-20%
+- Снижение среднего времени выполнения на 10%
+- Улучшение качества результатов (user rating)
+
+**Для найма агентов:**
+- Успешное создание нового агента за < 5 минут
+- Валидация нового агента с score > 80%
+- Интеграция нового агента без ошибок
+
+---
+
+## 📋 Roadmap
+
+### Q1 2025
+- ✅ Phase 1: MVP Backend + 10 базовых агентов
+- ✅ Phase 2: Telegram Mini App Integration
+- ⏳ Automated deployment system
+- ⏳ Testing infrastructure
+
+### Q2 2025
+- ⏳ Phase 3: HR Agent - базовая версия
+- ⏳ Performance monitoring
+- ⏳ Agent analytics dashboard
+
+### Q3 2025
+- ⏳ HR Agent - динамическое создание агентов
+- ⏳ A/B testing system
+- ⏳ Machine learning integration
+
+### Q4 2025
+- ⏳ Autonomous agent management
+- ⏳ Predictive analytics
+- ⏳ Multi-tenant support
+
+---
+
+**Последнее обновление:** 2025-11-17
+**Статус:** Phase 2 Complete, Phase 3 Planning
+
