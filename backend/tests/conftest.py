@@ -33,7 +33,7 @@ def event_loop() -> Generator:
 
 
 @pytest.fixture(scope="function")
-async def test_db_engine():
+async def db_engine():
     """Create test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
@@ -55,10 +55,10 @@ async def test_db_engine():
 
 
 @pytest.fixture(scope="function")
-async def db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
     async_session = async_sessionmaker(
-        test_db_engine,
+        db_engine,
         class_=AsyncSession,
         expire_on_commit=False,
     )
