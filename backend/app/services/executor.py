@@ -19,6 +19,7 @@ from app.models.project import Project, ProjectStatus
 from app.agents.registry import get_agent
 from app.database.connection import get_db
 from app.websockets.manager import ws_manager
+from app.services.knowledge_service import knowledge_service
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,13 @@ class TaskExecutor:
 
             # Update task with results
             await self._complete_task(task, result, db)
+
+            # Store result in Knowledge Base
+            try:
+                await self._store_in_knowledge_base(task, result, db)
+            except Exception as kb_error:
+                # Log error but don't fail the task
+                logger.warning(f"Failed to store task {task_id} in Knowledge Base: {kb_error}")
 
             # Send success notification
             await self._notify_task_status(task, "completed", result)
@@ -396,6 +404,76 @@ class TaskExecutor:
         await db.refresh(task)
 
         logger.info(f"Task {task_id} rolled back successfully")
+
+    async def _store_in_knowledge_base(
+        self,
+        task: Task,
+        result: Dict[str, Any],
+        db: AsyncSession
+    ):
+        """
+        Store task result in Knowledge Base for future reference.
+
+        Args:
+            task: Completed task
+            result: Task execution result
+            db: Database session
+        """
+        try:
+            # Extract output text from result
+            output_text = result.get("output", "")
+
+            # If output is a dict, convert to string
+            if isinstance(output_text, dict):
+                output_text = str(output_text)
+
+            # Only store if we have meaningful content
+            if not output_text or len(output_text) < 10:
+                logger.debug(f"Skipping KB storage for task {task.id} - no meaningful output")
+                return
+
+            # Prepare content
+            title = f"Task Result: {task.title}"
+            content = f"""
+Task: {task.title}
+Description: {task.description or 'N/A'}
+Agent: {task.assigned_agent}
+Status: {task.status.value}
+
+Output:
+{output_text}
+""".strip()
+
+            # Prepare metadata
+            metadata = {
+                "task_id": str(task.id),
+                "project_id": str(task.project_id),
+                "agent": task.assigned_agent,
+                "priority": task.priority.value,
+                "tokens_used": result.get("tokens_used", 0),
+                "execution_time_ms": result.get("execution_time_ms"),
+                "success": result.get("status") == "success",
+            }
+
+            # Store in Knowledge Base
+            await knowledge_service.store_knowledge(
+                title=title,
+                content=content,
+                content_type="task_result",
+                source_type="task",
+                source_id=task.id,
+                agent_type=task.assigned_agent,
+                tags=[task.assigned_agent, task.priority.value, "task_result"],
+                metadata=metadata,
+                db=db,
+            )
+
+            logger.info(f"Stored task {task.id} result in Knowledge Base")
+
+        except Exception as e:
+            # Log but don't fail - KB storage is not critical
+            logger.error(f"Failed to store task {task.id} in KB: {e}", exc_info=True)
+            raise
 
 
 # Global instance

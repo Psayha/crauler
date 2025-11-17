@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.project import Project, ProjectStatus
 from app.models.task import Task, TaskStatus
 from app.services.executor import task_executor, TaskExecutor
+from app.services.knowledge_service import knowledge_service
 from app.database.connection import get_db
 from app.websockets.manager import ws_manager
 
@@ -482,6 +483,13 @@ class OrchestratorService:
         project.project_metadata["execution_results"] = results
 
         await db.commit()
+
+        # Store project results in Knowledge Base
+        try:
+            await self._store_project_in_kb(project, results, db)
+        except Exception as kb_error:
+            # Log error but don't fail the project
+            logger.warning(f"Failed to store project {project.id} in Knowledge Base: {kb_error}")
         await db.refresh(project)
 
         logger.info(f"Project {project.id} completed successfully")
@@ -563,6 +571,96 @@ class OrchestratorService:
 
         except Exception as e:
             logger.warning(f"Failed to send progress update: {e}")
+
+    async def _store_project_in_kb(
+        self,
+        project: Project,
+        results: Dict[str, Any],
+        db: AsyncSession
+    ):
+        """
+        Store project results in Knowledge Base.
+
+        Args:
+            project: Completed project
+            results: Project execution results
+            db: Database session
+        """
+        try:
+            # Aggregate task outputs
+            task_summaries = []
+            for agent_name, agent_results in results.get("by_agent", {}).items():
+                for task_result in agent_results.get("tasks", []):
+                    if task_result.get("status") == "success":
+                        task_summaries.append(
+                            f"- {task_result.get('title', 'Untitled')}: "
+                            f"{task_result.get('output', 'No output')[:200]}"
+                        )
+
+            # Create content
+            title = f"Project: {project.name}"
+            content = f"""
+Project: {project.name}
+Type: {project.type.value}
+Description: {project.description or 'N/A'}
+Status: {project.status.value}
+Priority: {project.priority}
+
+Execution Summary:
+- Total Tasks: {results.get('total_tasks', 0)}
+- Completed: {results.get('completed_tasks', 0)}
+- Failed: {results.get('failed_tasks', 0)}
+- Total Tokens: {results.get('total_tokens', 0)}
+
+Task Results:
+{chr(10).join(task_summaries[:20]) if task_summaries else 'No task outputs'}
+
+Completion Time: {project.completed_at.isoformat() if project.completed_at else 'N/A'}
+""".strip()
+
+            # Prepare metadata
+            metadata = {
+                "project_id": str(project.id),
+                "project_type": project.type.value,
+                "priority": project.priority,
+                "total_tasks": results.get("total_tasks", 0),
+                "completed_tasks": results.get("completed_tasks", 0),
+                "failed_tasks": results.get("failed_tasks", 0),
+                "total_tokens": results.get("total_tokens", 0),
+                "agents_used": list(results.get("by_agent", {}).keys()),
+                "started_at": project.started_at.isoformat() if project.started_at else None,
+                "completed_at": project.completed_at.isoformat() if project.completed_at else None,
+            }
+
+            # Extract tags
+            tags = [
+                project.type.value,
+                project.priority,
+                "project_output",
+                "completed",
+            ]
+
+            # Add agent types as tags
+            tags.extend(results.get("by_agent", {}).keys())
+
+            # Store in Knowledge Base
+            await knowledge_service.store_knowledge(
+                title=title,
+                content=content,
+                content_type="project_output",
+                source_type="project",
+                source_id=project.id,
+                agent_type="orchestrator",
+                tags=tags,
+                metadata=metadata,
+                db=db,
+            )
+
+            logger.info(f"Stored project {project.id} results in Knowledge Base")
+
+        except Exception as e:
+            logger.error(f"Failed to store project {project.id} in KB: {e}", exc_info=True)
+            raise
 
 
 # Global instance
