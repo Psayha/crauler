@@ -35,7 +35,7 @@ class AgentPerformanceMetric(Base, TimestampMixin):
     total_tokens_used = Column(Integer, default=0)
 
     # Metadata
-    metadata = Column(JSONB, default={})
+    analytics_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved
 
     def __repr__(self):
         return f"<AgentPerformanceMetric {self.agent_type} ({self.metric_type}: {self.metric_value})>"
@@ -89,7 +89,7 @@ class AgentImprovement(Base, TimestampMixin):
     approved_at = Column(DateTime, nullable=True)
 
     # Metadata
-    metadata = Column(JSONB, default={})
+    analytics_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved
 
     def __repr__(self):
         return f"<AgentImprovement {self.agent_type} ({self.improvement_type}: {self.status})>"
@@ -157,7 +157,7 @@ class DynamicAgent(Base, TimestampMixin):
     deprecated_at = Column(DateTime, nullable=True)
 
     # Metadata
-    metadata = Column(JSONB, default={})
+    analytics_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved
 
     # Relationships
     created_by_project = relationship("Project", foreign_keys=[created_by_project_id])

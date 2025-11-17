@@ -101,7 +101,7 @@ class Notification(Base, TimestampMixin):
 
     # Optional action data
     action_url = Column(String(500), nullable=True)
-    metadata = Column(JSONB, default={})
+    notification_metadata = Column(JSONB, default={})  # Renamed from 'metadata' - SQLAlchemy reserved
 
     def __repr__(self):
         return f"<Notification {self.id} ({self.type})>"
@@ -116,6 +116,6 @@ class Notification(Base, TimestampMixin):
             "message": self.message,
             "is_read": self.is_read,
             "action_url": self.action_url,
-            "metadata": self.metadata,
+            "metadata": self.notification_metadata,  # Use renamed column
             "created_at": self.created_at.isoformat(),
         }
