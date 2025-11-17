@@ -5,6 +5,7 @@ from .task import Task, TaskStatus, TaskPriority
 from .agent_execution import AgentExecution
 from .user import User, UserSettings, Notification
 from .agent_analytics import AgentPerformanceMetric, AgentImprovement, DynamicAgent
+from .knowledge import KnowledgeEntry, SearchQuery
 
 __all__ = [
     "Base",
@@ -22,4 +23,6 @@ __all__ = [
     "AgentPerformanceMetric",
     "AgentImprovement",
     "DynamicAgent",
+    "KnowledgeEntry",
+    "SearchQuery",
 ]
