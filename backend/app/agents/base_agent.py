@@ -194,6 +194,7 @@ class AgentRegistry:
         from app.agents.devops_engineer_agent import DevOpsEngineerAgent
         from app.agents.project_manager_agent import ProjectManagerAgent
         from app.agents.qa_engineer_agent import QAEngineerAgent
+        from app.agents.hr_agent import HRAgent
 
         # Register agents
         self.register(MarketingAgent())
@@ -206,6 +207,7 @@ class AgentRegistry:
         self.register(DevOpsEngineerAgent())
         self.register(ProjectManagerAgent())
         self.register(QAEngineerAgent())
+        self.register(HRAgent())
 
         logger.info(f"Registered {len(self._agents)} agents")
 
