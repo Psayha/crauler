@@ -9,6 +9,7 @@ from app.agents.orchestrator import orchestrator
 from app.models.project import Project, ProjectStatus, ProjectType
 from app.models.task import Task
 from app.database.connection import get_db
+from app.services.agent_executor import agent_executor
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +189,11 @@ async def execute_project(project_id: str):
     """
     Start project execution
 
-    This will begin executing tasks in the appropriate order.
+    This will:
+    1. Validate project status
+    2. Update to IN_PROGRESS
+    3. Execute all tasks with agents in order
+    4. Update project status based on results
     """
     try:
         async with get_db() as db:
@@ -212,14 +217,15 @@ async def execute_project(project_id: str):
 
             logger.info(f"Started execution of project {project_id}")
 
-            # TODO: Trigger Celery task for execution
-            # For now, just return success
+        # Execute project with agent executor
+        execution_result = await agent_executor.execute_project(project_id)
 
-            return {
-                "status": "started",
-                "project_id": str(project.id),
-                "message": "Project execution started",
-            }
+        return {
+            "status": "completed",
+            "project_id": str(project_id),
+            "message": "Project execution completed",
+            "result": execution_result,
+        }
 
     except HTTPException:
         raise

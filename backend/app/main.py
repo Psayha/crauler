@@ -5,7 +5,7 @@ import logging
 
 from app.config import settings
 from app.database.connection import init_db
-from app.api import projects, tasks
+from app.api import projects, tasks, agents
 
 # Setup logging
 logging.basicConfig(
@@ -47,6 +47,7 @@ app.add_middleware(
 # Include routers
 app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
+app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
 
 
 @app.get("/")
