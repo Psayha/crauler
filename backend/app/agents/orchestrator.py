@@ -21,17 +21,16 @@ class OrchestratorAgent(BaseAgent):
     Acts as CEO/Product Manager coordinating all agents
     """
 
-    def __init__(self):
-        super().__init__(
-            agent_type="orchestrator",
-            name="AI Agency Orchestrator",
-            description="Main coordinator managing all specialist agents",
-            temperature=0.5
-        )
-        self.system_prompt = self._build_system_prompt()
+    def get_agent_type(self) -> str:
+        """Return agent type identifier"""
+        return "orchestrator"
 
-    def _build_system_prompt(self) -> str:
-        """Build system prompt for orchestrator"""
+    def get_temperature(self) -> float:
+        """Return temperature for Claude API calls"""
+        return 0.5
+
+    def get_system_prompt(self) -> str:
+        """Return system prompt for orchestrator"""
         return """You are the CEO and Chief Orchestrator of an AI Agency.
 
 Your role is to:
