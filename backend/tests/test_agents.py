@@ -39,6 +39,7 @@ def test_agent_registry():
         "devops_engineer",
         "project_manager",
         "qa_engineer",
+        "hr_manager",  # NEW: HR Agent
     ]
 
     for expected_type in expected_types:
@@ -82,7 +83,7 @@ async def test_agents_endpoint(client: AsyncClient):
     data = response.json()
 
     assert isinstance(data, list)
-    assert len(data) == 10  # Should have 10 agents
+    assert len(data) == 11  # Should have 11 agents (including HR Agent)
 
     # Check agent structure
     for agent in data:
