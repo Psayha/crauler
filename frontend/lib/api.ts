@@ -212,6 +212,65 @@ class ApiClient {
     const response = await this.client.get("/api/hr/dynamic-agents");
     return response.data;
   }
+
+  // Knowledge Base endpoints
+  async searchKnowledge(data: {
+    query: string;
+    top_k?: number;
+    content_type?: string;
+    agent_type?: string;
+    tags?: string[];
+  }) {
+    const response = await this.client.post("/api/knowledge/search", data);
+    return response.data;
+  }
+
+  async storeKnowledge(data: {
+    title: string;
+    content: string;
+    content_type: string;
+    source_type?: string;
+    source_id?: string;
+    agent_type?: string;
+    tags?: string[];
+    metadata?: Record<string, any>;
+  }) {
+    const response = await this.client.post("/api/knowledge/store", data);
+    return response.data;
+  }
+
+  async findSimilar(entryId: string, top_k?: number) {
+    const response = await this.client.get(
+      `/api/knowledge/similar/${entryId}`,
+      { params: { top_k } }
+    );
+    return response.data;
+  }
+
+  async getAgentContext(data: {
+    agent_type: string;
+    query: string;
+    top_k?: number;
+  }) {
+    const response = await this.client.post("/api/knowledge/context", data);
+    return response.data;
+  }
+
+  async suggestSimilarProjects(data: {
+    project_description: string;
+    top_k?: number;
+  }) {
+    const response = await this.client.post(
+      "/api/knowledge/suggest-projects",
+      data
+    );
+    return response.data;
+  }
+
+  async getKnowledgeStats() {
+    const response = await this.client.get("/api/knowledge/stats");
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();
