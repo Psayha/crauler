@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     claude_max_tokens: int = 4000
     claude_temperature: float = 0.3
 
+    # Telegram
+    telegram_bot_token: str = ""
+    telegram_webhook_url: Optional[str] = None
+
+    # JWT
+    jwt_secret_key: str = "change-this-jwt-secret-key-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
+
     # Vector DB (Pinecone)
     pinecone_api_key: Optional[str] = None
     pinecone_environment: Optional[str] = None
