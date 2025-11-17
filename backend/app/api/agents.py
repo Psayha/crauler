@@ -32,6 +32,10 @@ async def list_agents() -> Dict[str, Any]:
             "data_analyst": "Senior Data Analyst - Data analysis & BI",
             "ux_designer": "Senior UX/UI Designer - User experience & design",
             "content_writer": "Senior Content Writer - SEO & copywriting",
+            "mobile_developer": "Senior Mobile Developer - iOS/Android/Cross-platform",
+            "devops_engineer": "Senior DevOps Engineer - Infrastructure & CI/CD",
+            "project_manager": "Senior Project Manager - Planning & coordination",
+            "qa_engineer": "Senior QA Engineer - Testing & quality assurance",
         }
 
         agent_info.append(
