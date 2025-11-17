@@ -190,6 +190,10 @@ class AgentRegistry:
         from app.agents.data_analyst_agent import DataAnalystAgent
         from app.agents.ux_designer_agent import UXDesignerAgent
         from app.agents.content_writer_agent import ContentWriterAgent
+        from app.agents.mobile_developer_agent import MobileDeveloperAgent
+        from app.agents.devops_engineer_agent import DevOpsEngineerAgent
+        from app.agents.project_manager_agent import ProjectManagerAgent
+        from app.agents.qa_engineer_agent import QAEngineerAgent
 
         # Register agents
         self.register(MarketingAgent())
@@ -198,6 +202,10 @@ class AgentRegistry:
         self.register(DataAnalystAgent())
         self.register(UXDesignerAgent())
         self.register(ContentWriterAgent())
+        self.register(MobileDeveloperAgent())
+        self.register(DevOpsEngineerAgent())
+        self.register(ProjectManagerAgent())
+        self.register(QAEngineerAgent())
 
         logger.info(f"Registered {len(self._agents)} agents")
 
