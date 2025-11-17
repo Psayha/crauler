@@ -125,6 +125,29 @@ class BaseAgent(ABC):
                 "execution_time_ms": execution_time_ms,
             }
 
+    async def execute(self, prompt: str) -> str:
+        """
+        Execute a direct prompt without task context.
+        Used for meta-operations like HR Agent analysis.
+
+        Args:
+            prompt: Direct user prompt
+
+        Returns:
+            Claude's response text
+        """
+        try:
+            response = await claude_service.send_message(
+                system_prompt=self.system_prompt,
+                user_prompt=prompt,
+                temperature=self.temperature,
+                max_tokens=4000,
+            )
+            return response
+        except Exception as e:
+            logger.error(f"{self.agent_type} execution failed: {e}")
+            raise
+
     def _build_task_prompt(self, task: Task) -> str:
         """
         Build task prompt from task data
@@ -180,6 +203,11 @@ class AgentRegistry:
     def __init__(self):
         self._agents: Dict[str, BaseAgent] = {}
         self._register_agents()
+
+    @property
+    def agents(self) -> Dict[str, BaseAgent]:
+        """Get all registered agents."""
+        return self._agents
 
     def _register_agents(self):
         """Register all available agents"""
