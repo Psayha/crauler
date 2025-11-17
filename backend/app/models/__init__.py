@@ -3,6 +3,7 @@ from .organization import Organization
 from .project import Project, ProjectType, ProjectStatus
 from .task import Task, TaskStatus, TaskPriority
 from .agent_execution import AgentExecution
+from .user import User, UserSettings, Notification
 
 __all__ = [
     "Base",
@@ -14,4 +15,7 @@ __all__ = [
     "TaskStatus",
     "TaskPriority",
     "AgentExecution",
+    "User",
+    "UserSettings",
+    "Notification",
 ]
