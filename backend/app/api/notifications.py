@@ -5,7 +5,9 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 
 from app.database.connection import get_db
-from app.models.project import Project, Task, AgentExecution
+from app.models.project import Project
+from app.models.task import Task
+from app.models.agent_execution import AgentExecution
 from app.auth.dependencies import get_current_user
 from app.models.user import User
 
