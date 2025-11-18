@@ -34,7 +34,7 @@ async def sample_project(db_engine):
     async with get_db() as db:
         project = Project(
             id=uuid4(),
-            organization_id="test-org",
+            organization_id=uuid4(),  # Use UUID instead of string
             name="Test Project",
             description="Test project for task execution",
             type=ProjectType.WEBSITE,
