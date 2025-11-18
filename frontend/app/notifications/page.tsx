@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTelegram } from "@/components/providers/TelegramProvider";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
 import {
@@ -13,10 +13,7 @@ import {
   Info,
   Zap,
   Clock,
-  Trash2,
-  Filter,
   Loader2,
-  CheckCheck,
   ExternalLink,
 } from "lucide-react";
 
@@ -38,93 +35,18 @@ interface Notification {
 export default function NotificationsPage() {
   const router = useRouter();
   const { webApp } = useTelegram();
-  const queryClient = useQueryClient();
   const [filterType, setFilterType] = useState<NotificationType>("all");
 
-  // Fetch notifications
-  const { data: notifications, isLoading } = useQuery<Notification[]>({
+  // Fetch notifications from API
+  const { data: notificationsData, isLoading } = useQuery({
     queryKey: ["notifications", filterType],
-    queryFn: async () => {
-      // Mock notifications for now - can be replaced with actual API call
-      return [
-        {
-          id: "1",
-          user_id: "user-1",
-          project_id: "proj-1",
-          type: "project_completed",
-          title: "Проект завершён",
-          message: "Веб-сайт для кофейни успешно завершён всеми агентами",
-          is_read: false,
-          action_url: "/projects/proj-1",
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "2",
-          user_id: "user-1",
-          type: "task_failed",
-          title: "Задача не выполнена",
-          message: "Backend Developer не смог завершить настройку API",
-          is_read: false,
-          created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "3",
-          user_id: "user-1",
-          project_id: "proj-2",
-          type: "agent_completed",
-          title: "Агент завершил работу",
-          message: "Marketing Agent завершил анализ целевой аудитории",
-          is_read: true,
-          action_url: "/projects/proj-2",
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "4",
-          user_id: "user-1",
-          type: "system",
-          title: "Обновление системы",
-          message: "Доступна новая версия AI Agency v1.1.0",
-          is_read: true,
-          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-    },
+    queryFn: () => api.getNotifications(
+      filterType !== "all" ? { filter_type: filterType } : undefined
+    ),
   });
 
-  // Mark as read mutation
-  const markAsRead = useMutation({
-    mutationFn: async (notificationId: string) => {
-      // Mock mutation - can be replaced with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return notificationId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  // Delete notification mutation
-  const deleteNotification = useMutation({
-    mutationFn: async (notificationId: string) => {
-      // Mock mutation - can be replaced with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return notificationId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  // Mark all as read mutation
-  const markAllAsRead = useMutation({
-    mutationFn: async () => {
-      // Mock mutation - can be replaced with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
+  const notifications = notificationsData?.notifications || [];
+  const unreadCount = notificationsData?.unread_count || 0;
 
   // Setup Telegram buttons
   useEffect(() => {
@@ -134,23 +56,11 @@ export default function NotificationsPage() {
         router.push("/");
       });
 
-      const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
-      if (unreadCount > 0) {
-        webApp.MainButton.text = `✓ Отметить все как прочитанные (${unreadCount})`;
-        webApp.MainButton.show();
-        webApp.MainButton.onClick(() => {
-          markAllAsRead.mutate();
-        });
-      } else {
-        webApp.MainButton.hide();
-      }
-
       return () => {
         webApp.BackButton.hide();
-        webApp.MainButton.hide();
       };
     }
-  }, [webApp, router, notifications, markAllAsRead]);
+  }, [webApp, router]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -182,18 +92,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const filteredNotifications =
-    notifications?.filter((n) => {
-      if (filterType === "all") return true;
-      if (filterType === "project")
-        return n.type.includes("project") || n.project_id;
-      if (filterType === "task") return n.type.includes("task");
-      if (filterType === "agent") return n.type.includes("agent");
-      if (filterType === "system") return n.type === "system";
-      return true;
-    }) || [];
-
-  const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
+  const filteredNotifications = notifications;
 
   if (isLoading) {
     return (
@@ -279,22 +178,12 @@ export default function NotificationsPage() {
                   {getNotificationIcon(notification.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-semibold text-sm">
-                      {notification.title}
-                      {!notification.is_read && (
-                        <span className="ml-2 inline-block w-2 h-2 bg-blue-500 rounded-full" />
-                      )}
-                    </h3>
-                    <button
-                      onClick={() =>
-                        deleteNotification.mutate(notification.id)
-                      }
-                      className="text-tg-hint hover:text-red-500 transition-colors flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <h3 className="font-semibold text-sm mb-1">
+                    {notification.title}
+                    {!notification.is_read && (
+                      <span className="ml-2 inline-block w-2 h-2 bg-blue-500 rounded-full" />
+                    )}
+                  </h3>
                   {notification.message && (
                     <p className="text-sm text-tg-text mb-2">
                       {notification.message}
@@ -305,28 +194,17 @@ export default function NotificationsPage() {
                       <Clock className="w-3 h-3" />
                       {formatRelativeTime(notification.created_at)}
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!notification.is_read && (
-                        <button
-                          onClick={() => markAsRead.mutate(notification.id)}
-                          className="text-xs text-tg-link hover:underline flex items-center gap-1"
-                        >
-                          <CheckCheck className="w-3 h-3" />
-                          Прочитано
-                        </button>
-                      )}
-                      {notification.action_url && (
-                        <button
-                          onClick={() =>
-                            router.push(notification.action_url!)
-                          }
-                          className="text-xs text-tg-link hover:underline flex items-center gap-1"
-                        >
-                          Открыть
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
+                    {notification.action_url && (
+                      <button
+                        onClick={() =>
+                          router.push(notification.action_url!)
+                        }
+                        className="text-xs text-tg-link hover:underline flex items-center gap-1"
+                      >
+                        Открыть
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

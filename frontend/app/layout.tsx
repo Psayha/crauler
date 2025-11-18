@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { TelegramProvider } from "@/components/providers/TelegramProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { BottomNav } from "@/components/BottomNav";
 
 export const metadata: Metadata = {
   title: "AI Agency",
@@ -28,6 +29,7 @@ export default function RootLayout({
         <TelegramProvider>
           <QueryProvider>
             {children}
+            <BottomNav />
           </QueryProvider>
         </TelegramProvider>
       </body>

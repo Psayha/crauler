@@ -5,7 +5,7 @@ import logging
 
 from app.config import settings
 from app.database.connection import init_db
-from app.api import projects, tasks, agents, auth, hr, knowledge
+from app.api import projects, tasks, agents, auth, hr, knowledge, notifications
 from app.websockets import routes as ws_routes
 
 # Import all models to ensure they're registered with Base.metadata BEFORE init_db()
@@ -63,6 +63,7 @@ app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
 app.include_router(hr.router, prefix="/api/hr", tags=["HR Agent"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge Base"])
+app.include_router(notifications.router, tags=["Notifications"])
 app.include_router(ws_routes.router, tags=["WebSocket"])
 
 

@@ -278,6 +278,17 @@ class ApiClient {
     const response = await this.client.get("/api/knowledge/stats");
     return response.data;
   }
+
+  // Notifications endpoints
+  async getNotifications(params?: { filter_type?: string; limit?: number }) {
+    const response = await this.client.get("/api/notifications", { params });
+    return response.data;
+  }
+
+  async getUnreadCount() {
+    const response = await this.client.get("/api/notifications/unread-count");
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();
