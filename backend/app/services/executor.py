@@ -114,11 +114,7 @@ class TaskExecutor:
             # Execute task with agent
             logger.info(f"Executing task {task_id} with agent {task.assigned_agent}")
 
-            result = await agent.execute(
-                task_description=task.description,
-                context=task.input_data,
-                task_id=str(task_id)
-            )
+            result = await agent.execute_task(task)
 
             # Update execution record with results
             await self._update_execution_record(
@@ -302,8 +298,9 @@ class TaskExecutor:
     ):
         """Update execution record with results."""
         execution.status = "completed"
-        execution.response = result.get("response", "")
+        execution.response = str(result.get("result", ""))
         execution.tokens_used = result.get("tokens_used", 0)
+        execution.execution_time_ms = result.get("execution_time_ms", 0)
         execution.execution_metadata = result
 
         await db.commit()

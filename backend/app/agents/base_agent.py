@@ -80,7 +80,7 @@ class BaseAgent(ABC):
                     + claude_service.count_tokens(str(response)),
                     execution_time_ms=execution_time_ms,
                     status="completed",
-                    metadata={
+                    execution_metadata={
                         "temperature": self.temperature,
                         "task_title": task.title,
                     },
