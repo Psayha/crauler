@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTelegram } from "@/components/providers/TelegramProvider";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 import {
   Settings as SettingsIcon,
   Bell,
@@ -12,60 +10,106 @@ import {
   Sun,
   Globe,
   User,
-  Mail,
-  Building,
-  ChevronRight,
   Loader2,
   CheckCircle2,
+  ChevronRight,
 } from "lucide-react";
+
+interface UserSettings {
+  notifications: {
+    projectUpdates: boolean;
+    taskAssignments: boolean;
+    agentCompletion: boolean;
+    dailyDigest: boolean;
+  };
+  language: string;
+}
+
+const DEFAULT_SETTINGS: UserSettings = {
+  notifications: {
+    projectUpdates: true,
+    taskAssignments: true,
+    agentCompletion: true,
+    dailyDigest: false,
+  },
+  language: "ru",
+};
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { webApp } = useTelegram();
-  const queryClient = useQueryClient();
+  const { webApp, user } = useTelegram();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
 
-  // Fetch user settings
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["user-settings"],
-    queryFn: async () => {
-      // Mock settings for now - can be replaced with actual API call
-      return {
-        theme: "auto",
-        notifications: {
-          projectUpdates: true,
-          taskAssignments: true,
-          agentCompletion: true,
-          dailyDigest: false,
-        },
-        language: "ru",
-        email: "user@example.com",
-        organization: "AI Agency",
-      };
-    },
-  });
-
-  // Update settings mutation
-  const updateSettings = useMutation({
-    mutationFn: async (newSettings: any) => {
-      // Mock mutation - can be replaced with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return newSettings;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-settings"] });
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    },
-  });
-
-  const [localSettings, setLocalSettings] = useState(settings);
-
+  // Load settings from Telegram CloudStorage
   useEffect(() => {
-    if (settings) {
-      setLocalSettings(settings);
-    }
-  }, [settings]);
+    const loadSettings = async () => {
+      if (!webApp?.CloudStorage) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        webApp.CloudStorage.getItems(
+          ["notifications", "language"],
+          (error: any, result: any) => {
+            if (error) {
+              console.error("Error loading settings:", error);
+              setIsLoading(false);
+              return;
+            }
+
+            const loadedSettings: UserSettings = {
+              notifications: result.notifications
+                ? JSON.parse(result.notifications)
+                : DEFAULT_SETTINGS.notifications,
+              language: result.language || DEFAULT_SETTINGS.language,
+            };
+
+            setSettings(loadedSettings);
+            setIsLoading(false);
+          }
+        );
+      } catch (error) {
+        console.error("Error accessing CloudStorage:", error);
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [webApp]);
+
+  // Save settings to Telegram CloudStorage
+  const saveSettings = (newSettings: UserSettings) => {
+    if (!webApp?.CloudStorage) return;
+
+    webApp.CloudStorage.setItem(
+      "notifications",
+      JSON.stringify(newSettings.notifications),
+      (error: any) => {
+        if (error) {
+          console.error("Error saving notifications:", error);
+          return;
+        }
+      }
+    );
+
+    webApp.CloudStorage.setItem(
+      "language",
+      newSettings.language,
+      (error: any) => {
+        if (error) {
+          console.error("Error saving language:", error);
+          return;
+        }
+      }
+    );
+
+    setSettings(newSettings);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
 
   // Setup Telegram buttons
   useEffect(() => {
@@ -81,29 +125,23 @@ export default function SettingsPage() {
     }
   }, [webApp, router]);
 
-  const handleToggle = (key: string, subKey?: string) => {
-    if (!localSettings) return;
-
-    const newSettings = { ...localSettings };
-    if (subKey) {
-      newSettings[key] = {
-        ...newSettings[key],
-        [subKey]: !newSettings[key][subKey],
-      };
-    } else {
-      newSettings[key] = !newSettings[key];
-    }
-
-    setLocalSettings(newSettings);
-    updateSettings.mutate(newSettings);
+  const handleToggle = (subKey: string) => {
+    const newSettings = {
+      ...settings,
+      notifications: {
+        ...settings.notifications,
+        [subKey]: !settings.notifications[subKey as keyof typeof settings.notifications],
+      },
+    };
+    saveSettings(newSettings);
   };
 
   const handleThemeChange = (theme: string) => {
-    if (!localSettings) return;
-
-    const newSettings = { ...localSettings, theme };
-    setLocalSettings(newSettings);
-    updateSettings.mutate(newSettings);
+    // Theme is controlled by Telegram directly
+    // We can trigger haptic feedback
+    if (webApp?.HapticFeedback) {
+      webApp.HapticFeedback.impactOccurred("light");
+    }
   };
 
   if (isLoading) {
@@ -151,26 +189,26 @@ export default function SettingsPage() {
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             <div className="px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-tg-hint" />
-                <span className="text-sm">Email</span>
+                <User className="w-4 h-4 text-tg-hint" />
+                <span className="text-sm">Имя</span>
               </div>
               <span className="text-sm text-tg-hint">
-                {localSettings?.email}
+                {user?.first_name || user?.username || "User"}
               </span>
             </div>
-            <div className="px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Building className="w-4 h-4 text-tg-hint" />
-                <span className="text-sm">Организация</span>
+            {user?.username && (
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-tg-hint">@</span>
+                  <span className="text-sm">Username</span>
+                </div>
+                <span className="text-sm text-tg-hint">@{user.username}</span>
               </div>
-              <span className="text-sm text-tg-hint">
-                {localSettings?.organization}
-              </span>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Theme Section */}
+        {/* Theme Info */}
         <div className="bg-tg-secondary-bg rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <h3 className="font-semibold flex items-center gap-2">
@@ -178,55 +216,25 @@ export default function SettingsPage() {
               Тема оформления
             </h3>
           </div>
-          <div className="p-4 space-y-2">
-            <button
-              onClick={() => handleThemeChange("light")}
-              className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-colors ${
-                localSettings?.theme === "light"
-                  ? "bg-tg-button text-tg-button-text"
-                  : "bg-gray-100 dark:bg-gray-800 text-tg-text"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Sun className="w-4 h-4" />
-                <span className="text-sm font-medium">Светлая</span>
+          <div className="px-4 py-3">
+            <p className="text-sm text-tg-hint">
+              Тема приложения автоматически синхронизируется с темой Telegram.
+              Измените тему в настройках Telegram для изменения темы приложения.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {webApp?.colorScheme === "dark" ? (
+                    <Moon className="w-4 h-4" />
+                  ) : (
+                    <Sun className="w-4 h-4" />
+                  )}
+                  <span className="text-sm">
+                    {webApp?.colorScheme === "dark" ? "Тёмная" : "Светлая"}
+                  </span>
+                </div>
               </div>
-              {localSettings?.theme === "light" && (
-                <CheckCircle2 className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              onClick={() => handleThemeChange("dark")}
-              className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-colors ${
-                localSettings?.theme === "dark"
-                  ? "bg-tg-button text-tg-button-text"
-                  : "bg-gray-100 dark:bg-gray-800 text-tg-text"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Moon className="w-4 h-4" />
-                <span className="text-sm font-medium">Тёмная</span>
-              </div>
-              {localSettings?.theme === "dark" && (
-                <CheckCircle2 className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              onClick={() => handleThemeChange("auto")}
-              className={`w-full px-4 py-3 rounded-lg flex items-center justify-between transition-colors ${
-                localSettings?.theme === "auto"
-                  ? "bg-tg-button text-tg-button-text"
-                  : "bg-gray-100 dark:bg-gray-800 text-tg-text"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <SettingsIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">Системная</span>
-              </div>
-              {localSettings?.theme === "auto" && (
-                <CheckCircle2 className="w-4 h-4" />
-              )}
-            </button>
+            </div>
           </div>
         </div>
 
@@ -247,18 +255,16 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button
-                onClick={() =>
-                  handleToggle("notifications", "projectUpdates")
-                }
+                onClick={() => handleToggle("projectUpdates")}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  localSettings?.notifications?.projectUpdates
+                  settings.notifications.projectUpdates
                     ? "bg-tg-button"
                     : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <div
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    localSettings?.notifications?.projectUpdates
+                    settings.notifications.projectUpdates
                       ? "translate-x-6"
                       : "translate-x-0.5"
                   }`}
@@ -273,18 +279,16 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button
-                onClick={() =>
-                  handleToggle("notifications", "taskAssignments")
-                }
+                onClick={() => handleToggle("taskAssignments")}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  localSettings?.notifications?.taskAssignments
+                  settings.notifications.taskAssignments
                     ? "bg-tg-button"
                     : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <div
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    localSettings?.notifications?.taskAssignments
+                    settings.notifications.taskAssignments
                       ? "translate-x-6"
                       : "translate-x-0.5"
                   }`}
@@ -299,18 +303,16 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button
-                onClick={() =>
-                  handleToggle("notifications", "agentCompletion")
-                }
+                onClick={() => handleToggle("agentCompletion")}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  localSettings?.notifications?.agentCompletion
+                  settings.notifications.agentCompletion
                     ? "bg-tg-button"
                     : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <div
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    localSettings?.notifications?.agentCompletion
+                    settings.notifications.agentCompletion
                       ? "translate-x-6"
                       : "translate-x-0.5"
                   }`}
@@ -325,16 +327,16 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button
-                onClick={() => handleToggle("notifications", "dailyDigest")}
+                onClick={() => handleToggle("dailyDigest")}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  localSettings?.notifications?.dailyDigest
+                  settings.notifications.dailyDigest
                     ? "bg-tg-button"
                     : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <div
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    localSettings?.notifications?.dailyDigest
+                    settings.notifications.dailyDigest
                       ? "translate-x-6"
                       : "translate-x-0.5"
                   }`}
