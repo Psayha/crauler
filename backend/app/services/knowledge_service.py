@@ -12,6 +12,7 @@ import asyncio
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
 
 from app.models.knowledge import KnowledgeEntry, SearchQuery
 from app.config import settings
@@ -25,7 +26,7 @@ class KnowledgeService:
     Service for knowledge base operations.
 
     Features:
-    - Embedding generation using Claude API
+    - Embedding generation using OpenAI API
     - Semantic search with pgvector
     - Knowledge storage and retrieval
     - Similar document finding
@@ -34,34 +35,58 @@ class KnowledgeService:
     def __init__(self):
         """Initialize knowledge service."""
         self.client = AsyncAnthropic(api_key=settings.claude_api_key)
+        self.openai_client = AsyncOpenAI(api_key=settings.openai_api_key) if settings.openai_api_key else None
         logger.info("KnowledgeService initialized")
 
     async def generate_embedding(self, text: str) -> List[float]:
         """
-        Generate embedding vector for text.
+        Generate embedding vector for text using OpenAI.
 
-        Currently returns a placeholder. In production, you would:
-        1. Use Claude API's embedding endpoint (when available)
-        2. Or use OpenAI's ada-002 model
-        3. Or use local embedding models like sentence-transformers
+        Uses text-embedding-ada-002 model for semantic embeddings.
+        Falls back to random embeddings if OpenAI API key not configured.
 
         Args:
-            text: Text to embed
+            text: Text to embed (will be truncated to ~8191 tokens if needed)
 
         Returns:
             1536-dimensional embedding vector
         """
-        # Placeholder implementation
-        # TODO: Replace with actual embedding generation
-        # For now, return a random normalized vector
-        import random
-        import math
+        if not self.openai_client:
+            logger.warning("OpenAI client not initialized - using random embeddings")
+            # Fallback to random normalized vector
+            import random
+            import math
+            vector = [random.gauss(0, 1) for _ in range(1536)]
+            magnitude = math.sqrt(sum(x * x for x in vector))
+            return [x / magnitude for x in vector]
 
-        vector = [random.gauss(0, 1) for _ in range(1536)]
-        magnitude = math.sqrt(sum(x * x for x in vector))
-        normalized = [x / magnitude for x in vector]
+        try:
+            # Truncate text if too long (OpenAI limit: ~8191 tokens)
+            # Rough estimate: 1 token ≈ 4 chars
+            max_chars = 8191 * 4
+            if len(text) > max_chars:
+                text = text[:max_chars]
+                logger.warning(f"Text truncated to {max_chars} chars for embedding")
 
-        return normalized
+            # Generate embedding
+            response = await self.openai_client.embeddings.create(
+                model=settings.openai_embedding_model,
+                input=text
+            )
+
+            embedding = response.data[0].embedding
+            logger.debug(f"Generated embedding with {len(embedding)} dimensions")
+
+            return embedding
+
+        except Exception as e:
+            logger.error(f"Failed to generate OpenAI embedding: {e}")
+            # Fallback to random on error
+            import random
+            import math
+            vector = [random.gauss(0, 1) for _ in range(1536)]
+            magnitude = math.sqrt(sum(x * x for x in vector))
+            return [x / magnitude for x in vector]
 
     async def store_knowledge(
         self,

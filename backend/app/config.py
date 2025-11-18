@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     claude_max_tokens: int = 4000
     claude_temperature: float = 0.3
 
+    # OpenAI API (for embeddings)
+    openai_api_key: Optional[str] = None
+    openai_embedding_model: str = "text-embedding-ada-002"
+
     # Telegram
     telegram_bot_token: str = ""
     telegram_webhook_url: Optional[str] = None
