@@ -93,10 +93,14 @@ async def test_execute_task_success(task_executor, sample_task, db_engine):
     # Mock agent execution
     with patch("app.agents.registry.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
-        mock_agent.execute.return_value = {
+        mock_agent.execute_task.return_value = {
             "status": "success",
-            "output": "Homepage created successfully",
-            "tokens_used": 850
+            "result": {"output": "Homepage created successfully"},
+            "prompt": "Create homepage",
+            "response": '{"output": "Homepage created successfully"}',
+            "tokens_used": 850,
+            "execution_time_ms": 1000,
+            "metadata": {}
         }
         mock_get_agent.return_value = mock_agent
 
@@ -183,10 +187,14 @@ async def test_execute_task_with_dependencies_met(
         # Mock agent
         with patch("app.agents.registry.get_agent") as mock_get_agent:
             mock_agent = AsyncMock()
-            mock_agent.execute.return_value = {
+            mock_agent.execute_task.return_value = {
                 "status": "success",
-                "output": "API created",
-                "tokens_used": 1200
+                "result": {"output": "API created"},
+                "prompt": "Create API",
+                "response": '{"output": "API created"}',
+                "tokens_used": 1200,
+                "execution_time_ms": 1500,
+                "metadata": {}
             }
             mock_get_agent.return_value = mock_agent
 
@@ -243,13 +251,27 @@ async def test_execute_task_with_retry(task_executor, sample_task, db_engine):
     # Mock agent to fail twice, then succeed
     with patch("app.agents.registry.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
-        mock_agent.execute.side_effect = [
-            Exception("Temporary error"),
-            Exception("Temporary error"),
+        mock_agent.execute_task.side_effect = [
+            {
+                "status": "failed",
+                "error": "Temporary error",
+                "prompt": "",
+                "execution_time_ms": 100
+            },
+            {
+                "status": "failed",
+                "error": "Temporary error",
+                "prompt": "",
+                "execution_time_ms": 100
+            },
             {
                 "status": "success",
-                "output": "Success on third attempt",
-                "tokens_used": 900
+                "result": {"output": "Success on third attempt"},
+                "prompt": "Create homepage",
+                "response": '{"output": "Success on third attempt"}',
+                "tokens_used": 900,
+                "execution_time_ms": 1000,
+                "metadata": {}
             }
         ]
         mock_get_agent.return_value = mock_agent
@@ -258,7 +280,7 @@ async def test_execute_task_with_retry(task_executor, sample_task, db_engine):
             result = await task_executor.execute_task(sample_task.id, db, retry_count=0)
 
         assert result["status"] == "success"
-        assert mock_agent.execute.call_count == 3
+        assert mock_agent.execute_task.call_count == 3
 
 
 @pytest.mark.asyncio
@@ -269,7 +291,12 @@ async def test_execute_task_max_retries_exceeded(task_executor, sample_task, db_
     # Mock agent to always fail
     with patch("app.agents.registry.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
-        mock_agent.execute.side_effect = Exception("Persistent error")
+        mock_agent.execute_task.return_value = {
+            "status": "failed",
+            "error": "Persistent error",
+            "prompt": "",
+            "execution_time_ms": 100
+        }
         mock_get_agent.return_value = mock_agent
 
         async with get_db() as db:
@@ -325,10 +352,14 @@ async def test_execute_task_batch_parallel(task_executor, sample_project, db_eng
         # Mock agent
         with patch("app.agents.registry.get_agent") as mock_get_agent:
             mock_agent = AsyncMock()
-            mock_agent.execute.return_value = {
+            mock_agent.execute_task.return_value = {
                 "status": "success",
-                "output": "Task completed",
-                "tokens_used": 500
+                "result": {"output": "Task completed"},
+                "prompt": "Complete task",
+                "response": '{"output": "Task completed"}',
+                "tokens_used": 500,
+                "execution_time_ms": 800,
+                "metadata": {}
             }
             mock_get_agent.return_value = mock_agent
 
@@ -367,10 +398,14 @@ async def test_execute_task_batch_sequential(task_executor, sample_project, db_e
         # Mock agent
         with patch("app.agents.registry.get_agent") as mock_get_agent:
             mock_agent = AsyncMock()
-            mock_agent.execute.return_value = {
+            mock_agent.execute_task.return_value = {
                 "status": "success",
-                "output": "Task completed",
-                "tokens_used": 600
+                "result": {"output": "Task completed"},
+                "prompt": "Complete task",
+                "response": '{"output": "Task completed"}',
+                "tokens_used": 600,
+                "execution_time_ms": 900,
+                "metadata": {}
             }
             mock_get_agent.return_value = mock_agent
 
@@ -413,10 +448,14 @@ async def test_execution_record_created(task_executor, sample_task, db_engine):
 
     with patch("app.agents.registry.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
-        mock_agent.execute.return_value = {
+        mock_agent.execute_task.return_value = {
             "status": "success",
-            "output": "Task completed",
-            "tokens_used": 750
+            "result": {"output": "Task completed"},
+            "prompt": "Create homepage",
+            "response": '{"output": "Task completed"}',
+            "tokens_used": 750,
+            "execution_time_ms": 1200,
+            "metadata": {}
         }
         mock_get_agent.return_value = mock_agent
 
@@ -429,7 +468,7 @@ async def test_execution_record_created(task_executor, sample_task, db_engine):
                     AgentExecution.task_id == sample_task.id
                 )
             )
-            execution = result.scalar_one_or_none()
+            execution = result.scalar_one()
 
             assert execution is not None
             assert execution.agent_type == "frontend_developer"
@@ -444,7 +483,7 @@ async def test_task_status_transitions(task_executor, sample_task, db_engine):
 
     statuses_observed = []
 
-    async def mock_execute(*args, **kwargs):
+    async def mock_execute_task(*args, **kwargs):
         # Capture status during execution
         async with get_db() as db:
             task = await task_executor._get_task(sample_task.id, db)
@@ -452,13 +491,17 @@ async def test_task_status_transitions(task_executor, sample_task, db_engine):
 
         return {
             "status": "success",
-            "output": "Completed",
-            "tokens_used": 800
+            "result": {"output": "Completed"},
+            "prompt": "Create homepage",
+            "response": '{"output": "Completed"}',
+            "tokens_used": 800,
+            "execution_time_ms": 1100,
+            "metadata": {}
         }
 
     with patch("app.agents.registry.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
-        mock_agent.execute = mock_execute
+        mock_agent.execute_task = mock_execute_task
         mock_get_agent.return_value = mock_agent
 
         async with get_db() as db:
