@@ -4,6 +4,7 @@ import asyncio
 import os
 from typing import AsyncGenerator, Generator
 from httpx import AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.main import app
@@ -47,6 +48,8 @@ async def db_engine():
 
     # Create all tables
     async with engine.begin() as conn:
+        # Enable pgvector extension first
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
@@ -78,6 +81,8 @@ async def setup_test_database():
 
     # Create all tables using the app's engine
     async with app_engine.begin() as conn:
+        # Enable pgvector extension first
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
 
     yield
