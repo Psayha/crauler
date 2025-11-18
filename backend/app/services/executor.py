@@ -116,6 +116,17 @@ class TaskExecutor:
 
             result = await agent.execute_task(task)
 
+            # Check if execution failed
+            if result.get("status") == "failed":
+                # Update execution record with failure
+                await self._update_execution_record(
+                    execution=execution,
+                    result=result,
+                    db=db
+                )
+                # Raise exception to trigger retry logic
+                raise TaskExecutionError(result.get("error", "Unknown error"))
+
             # Update execution record with results
             await self._update_execution_record(
                 execution=execution,
@@ -297,16 +308,23 @@ class TaskExecutor:
         db: AsyncSession
     ):
         """Update execution record with results."""
-        execution.status = "completed"
-        execution.response = str(result.get("result", ""))
-        execution.tokens_used = result.get("tokens_used", 0)
-        execution.execution_time_ms = result.get("execution_time_ms", 0)
-        execution.execution_metadata = result
+        if result.get("status") == "failed":
+            execution.status = "failed"
+            execution.error_message = result.get("error", "Unknown error")
+            execution.prompt = result.get("prompt", "")
+            execution.execution_time_ms = result.get("execution_time_ms", 0)
+        else:
+            execution.status = "completed"
+            execution.prompt = result.get("prompt", "")
+            execution.response = result.get("response", "")
+            execution.tokens_used = result.get("tokens_used", 0)
+            execution.execution_time_ms = result.get("execution_time_ms", 0)
+            execution.execution_metadata = result.get("metadata", {})
 
         await db.commit()
         await db.refresh(execution)
 
-        logger.debug(f"Updated execution record {execution.id} with results")
+        logger.debug(f"Updated execution record {execution.id} with status {execution.status}")
 
     async def _complete_task(
         self,
@@ -316,7 +334,7 @@ class TaskExecutor:
     ):
         """Mark task as completed with results."""
         task.status = TaskStatus.COMPLETED
-        task.output_data = result
+        task.output_data = result.get("result", result)
         task.completed_at = datetime.utcnow()
         task.actual_tokens = result.get("tokens_used", 0)
 

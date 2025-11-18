@@ -2,12 +2,10 @@ from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 import logging
 import time
-from datetime import datetime
 
 from app.services.claude_service import claude_service
 from app.services.knowledge_service import knowledge_service
 from app.models.task import Task
-from app.models.agent_execution import AgentExecution
 from app.database.connection import get_db
 
 logger = logging.getLogger(__name__)
@@ -42,6 +40,9 @@ class BaseAgent(ABC):
         """
         Execute a task assigned to this agent
 
+        Note: This method only executes the task and returns results.
+        The executor is responsible for creating execution records and updating task status.
+
         Args:
             task: Task object from database
 
@@ -68,29 +69,7 @@ class BaseAgent(ABC):
             )
 
             execution_time_ms = int((time.time() - start_time) * 1000)
-
-            # Save execution to database
-            async with get_db() as db:
-                execution = AgentExecution(
-                    task_id=task.id,
-                    agent_type=self.agent_type,
-                    prompt=user_prompt,
-                    response=str(response),
-                    tokens_used=claude_service.count_tokens(user_prompt)
-                    + claude_service.count_tokens(str(response)),
-                    execution_time_ms=execution_time_ms,
-                    status="completed",
-                    execution_metadata={
-                        "temperature": self.temperature,
-                        "task_title": task.title,
-                    },
-                )
-                db.add(execution)
-
-                # Update task
-                task.output_data = response
-                task.actual_tokens = execution.tokens_used
-                task.completed_at = datetime.utcnow()
+            tokens_used = claude_service.count_tokens(user_prompt) + claude_service.count_tokens(str(response))
 
             logger.info(
                 f"{self.agent_type} completed task {task.id} in {execution_time_ms}ms"
@@ -101,31 +80,26 @@ class BaseAgent(ABC):
                 "agent": self.agent_type,
                 "task_id": str(task.id),
                 "result": response,
+                "prompt": user_prompt,
+                "response": str(response),
                 "execution_time_ms": execution_time_ms,
-                "tokens_used": execution.tokens_used,
+                "tokens_used": tokens_used,
+                "metadata": {
+                    "temperature": self.temperature,
+                    "task_title": task.title,
+                },
             }
 
         except Exception as e:
             execution_time_ms = int((time.time() - start_time) * 1000)
             logger.error(f"{self.agent_type} failed task {task.id}: {e}")
 
-            # Save failed execution
-            async with get_db() as db:
-                execution = AgentExecution(
-                    task_id=task.id,
-                    agent_type=self.agent_type,
-                    prompt=user_prompt if "user_prompt" in locals() else "",
-                    status="failed",
-                    error_message=str(e),
-                    execution_time_ms=execution_time_ms,
-                )
-                db.add(execution)
-
             return {
                 "status": "failed",
                 "agent": self.agent_type,
                 "task_id": str(task.id),
                 "error": str(e),
+                "prompt": user_prompt if "user_prompt" in locals() else "",
                 "execution_time_ms": execution_time_ms,
             }
 
