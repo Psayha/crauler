@@ -191,7 +191,7 @@ class TaskExecutor:
 
         Args:
             task_ids: List of task UUIDs
-            db: Database session
+            db: Database session (ignored in parallel mode - each task gets its own session)
             parallel: Execute tasks in parallel if True
 
         Returns:
@@ -200,9 +200,14 @@ class TaskExecutor:
         logger.info(f"Executing batch of {len(task_ids)} tasks (parallel={parallel})")
 
         if parallel:
-            # Execute tasks in parallel
+            # Execute tasks in parallel - each with its own DB session
+            async def execute_with_new_session(task_id: UUID):
+                from app.database.connection import get_db
+                async with get_db() as task_db:
+                    return await self.execute_task(task_id, task_db)
+
             raw_results = await asyncio.gather(
-                *[self.execute_task(task_id, db) for task_id in task_ids],
+                *[execute_with_new_session(task_id) for task_id in task_ids],
                 return_exceptions=True
             )
             # Convert exceptions to error dicts
