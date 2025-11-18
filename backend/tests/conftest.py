@@ -18,6 +18,7 @@ from app.models import (  # noqa: F401
     Task, TaskStatus, TaskPriority,
     AgentExecution,
     AgentPerformanceMetric, AgentImprovement, DynamicAgent,
+    KnowledgeEntry, SearchQuery,
 )
 
 
