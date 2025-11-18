@@ -201,10 +201,18 @@ class TaskExecutor:
 
         if parallel:
             # Execute tasks in parallel
-            results = await asyncio.gather(
+            raw_results = await asyncio.gather(
                 *[self.execute_task(task_id, db) for task_id in task_ids],
                 return_exceptions=True
             )
+            # Convert exceptions to error dicts
+            results = []
+            for i, result in enumerate(raw_results):
+                if isinstance(result, Exception):
+                    logger.error(f"Failed to execute task {task_ids[i]}: {result}")
+                    results.append({"status": "error", "task_id": str(task_ids[i]), "error": str(result)})
+                else:
+                    results.append(result)
         else:
             # Execute tasks sequentially
             results = []
