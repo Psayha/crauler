@@ -2,11 +2,10 @@ from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 import logging
 import time
-from datetime import datetime
 
 from app.services.claude_service import claude_service
+from app.services.knowledge_service import knowledge_service
 from app.models.task import Task
-from app.models.agent_execution import AgentExecution
 from app.database.connection import get_db
 
 logger = logging.getLogger(__name__)
@@ -41,6 +40,9 @@ class BaseAgent(ABC):
         """
         Execute a task assigned to this agent
 
+        Note: This method only executes the task and returns results.
+        The executor is responsible for creating execution records and updating task status.
+
         Args:
             task: Task object from database
 
@@ -52,8 +54,11 @@ class BaseAgent(ABC):
         start_time = time.time()
 
         try:
-            # Build task prompt
-            user_prompt = self._build_task_prompt(task)
+            # Fetch relevant context from Knowledge Base
+            kb_context = await self._fetch_relevant_context(task)
+
+            # Build task prompt with context
+            user_prompt = self._build_task_prompt(task, kb_context)
 
             # Call Claude API
             response = await claude_service.parse_json_response(
@@ -64,29 +69,7 @@ class BaseAgent(ABC):
             )
 
             execution_time_ms = int((time.time() - start_time) * 1000)
-
-            # Save execution to database
-            async with get_db() as db:
-                execution = AgentExecution(
-                    task_id=task.id,
-                    agent_type=self.agent_type,
-                    prompt=user_prompt,
-                    response=str(response),
-                    tokens_used=claude_service.count_tokens(user_prompt)
-                    + claude_service.count_tokens(str(response)),
-                    execution_time_ms=execution_time_ms,
-                    status="completed",
-                    metadata={
-                        "temperature": self.temperature,
-                        "task_title": task.title,
-                    },
-                )
-                db.add(execution)
-
-                # Update task
-                task.output_data = response
-                task.actual_tokens = execution.tokens_used
-                task.completed_at = datetime.utcnow()
+            tokens_used = claude_service.count_tokens(user_prompt) + claude_service.count_tokens(str(response))
 
             logger.info(
                 f"{self.agent_type} completed task {task.id} in {execution_time_ms}ms"
@@ -97,31 +80,26 @@ class BaseAgent(ABC):
                 "agent": self.agent_type,
                 "task_id": str(task.id),
                 "result": response,
+                "prompt": user_prompt,
+                "response": str(response),
                 "execution_time_ms": execution_time_ms,
-                "tokens_used": execution.tokens_used,
+                "tokens_used": tokens_used,
+                "metadata": {
+                    "temperature": self.temperature,
+                    "task_title": task.title,
+                },
             }
 
         except Exception as e:
             execution_time_ms = int((time.time() - start_time) * 1000)
             logger.error(f"{self.agent_type} failed task {task.id}: {e}")
 
-            # Save failed execution
-            async with get_db() as db:
-                execution = AgentExecution(
-                    task_id=task.id,
-                    agent_type=self.agent_type,
-                    prompt=user_prompt if "user_prompt" in locals() else "",
-                    status="failed",
-                    error_message=str(e),
-                    execution_time_ms=execution_time_ms,
-                )
-                db.add(execution)
-
             return {
                 "status": "failed",
                 "agent": self.agent_type,
                 "task_id": str(task.id),
                 "error": str(e),
+                "prompt": user_prompt if "user_prompt" in locals() else "",
                 "execution_time_ms": execution_time_ms,
             }
 
@@ -148,12 +126,13 @@ class BaseAgent(ABC):
             logger.error(f"{self.agent_type} execution failed: {e}")
             raise
 
-    def _build_task_prompt(self, task: Task) -> str:
+    def _build_task_prompt(self, task: Task, kb_context: str = "") -> str:
         """
         Build task prompt from task data
 
         Args:
             task: Task object
+            kb_context: Relevant context from Knowledge Base
 
         Returns:
             Formatted prompt for Claude
@@ -188,10 +167,52 @@ Description:
 
 """
 
+        # Add relevant context from Knowledge Base
+        if kb_context:
+            prompt += f"""Relevant Context from Previous Work:
+{kb_context}
+
+"""
+
         prompt += """Please complete this task following your expertise and output format.
 Provide specific, actionable deliverables in JSON format."""
 
         return prompt
+
+    async def _fetch_relevant_context(self, task: Task) -> str:
+        """
+        Fetch relevant context from Knowledge Base for this task.
+
+        Args:
+            task: Task object
+
+        Returns:
+            Formatted context string
+        """
+        try:
+            # Build query from task title and description
+            query = f"{task.title}. {task.description}"
+
+            # Fetch context using knowledge service
+            async with get_db() as db:
+                context = await knowledge_service.get_context_for_agent(
+                    agent_type=self.agent_type,
+                    query=query,
+                    top_k=3,  # Get top 3 most relevant entries
+                    db=db,
+                )
+
+            if context:
+                logger.debug(f"Fetched KB context for task {task.id} ({len(context)} chars)")
+            else:
+                logger.debug(f"No relevant KB context found for task {task.id}")
+
+            return context
+
+        except Exception as e:
+            # Log error but don't fail the task
+            logger.warning(f"Failed to fetch KB context for task {task.id}: {e}")
+            return ""
 
 
 class AgentRegistry:

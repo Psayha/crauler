@@ -209,3 +209,6 @@ class ConnectionManager:
 
 # Global connection manager instance
 connection_manager = ConnectionManager()
+
+# Alias for backward compatibility
+ws_manager = connection_manager

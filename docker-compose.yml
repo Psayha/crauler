@@ -69,22 +69,69 @@ services:
     command: fastapi dev app/main.py --host 0.0.0.0 --port 8000
     restart: unless-stopped
 
-  # Celery Worker (for future use)
-  # celery:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: ../docker/Dockerfile.backend
-  #   container_name: ai-agency-celery
-  #   environment:
-  #     DATABASE_URL: postgresql+asyncpg://aiagency:securepassword@postgres:5432/ai_agency
-  #     REDIS_URL: redis://redis:6379
-  #     CLAUDE_API_KEY: ${CLAUDE_API_KEY}
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #   volumes:
-  #     - ./backend:/app
-  #   command: celery -A app.workers.celery_app worker --loglevel=info
+  # Celery Worker
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: ai-agency-celery-worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aiagency:securepassword@postgres:5432/ai_agency
+      REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+    restart: unless-stopped
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: ai-agency-celery-beat
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aiagency:securepassword@postgres:5432/ai_agency
+      REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: celery -A app.celery_app beat --loglevel=info
+    restart: unless-stopped
+
+  # Flower - Celery Monitoring
+  flower:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: ai-agency-flower
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: celery -A app.celery_app flower --port=5555
+    restart: unless-stopped
 
 volumes:
   postgres_data:
