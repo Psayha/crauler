@@ -30,11 +30,24 @@ def task_executor():
 async def sample_project(db_engine):
     """Create sample project."""
     from app.database.connection import get_db
+    from app.models.organization import Organization
 
     async with get_db() as db:
+        # Create organization first
+        org = Organization(
+            id=uuid4(),
+            name="Test Organization",
+            slug="test-org",
+            plan="starter",
+            credits_balance=1000
+        )
+        db.add(org)
+        await db.flush()  # Ensure org.id is available
+
+        # Create project with valid organization_id
         project = Project(
             id=uuid4(),
-            organization_id=uuid4(),  # Use UUID instead of string
+            organization_id=org.id,
             name="Test Project",
             description="Test project for task execution",
             type=ProjectType.WEBSITE,
