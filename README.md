@@ -4,7 +4,7 @@
 
 ## 🎯 Что это?
 
-AI Agency - это система из специализированных AI-агентов, которые работают под управлением Orchestrator (CEO) для выполнения цифровых проектов.
+AI Agency - это полноценная Telegram Mini App платформа с системой из специализированных AI-агентов, которые работают под управлением Orchestrator (CEO) для выполнения цифровых проектов.
 
 ### ✅ Реализованные агенты (11/11):
 
@@ -22,40 +22,70 @@ AI Agency - это система из специализированных AI-�
 
 ## ⚡ Ключевые возможности
 
-- ✅ **Telegram Mini App** - полноценный UI прямо в Telegram
-- ✅ **Автоматическая декомпозиция проектов** - Orchestrator разбивает проект на задачи
+### 🎨 Telegram Mini App UI
+- ✅ **8 полноценных страниц** - Dashboard, Projects, Agents, Knowledge Base, Notifications, Settings
+- ✅ **Bottom Navigation** - удобная навигация между разделами
+- ✅ **Telegram Theme Integration** - автоматическая синхронизация темы
+- ✅ **CloudStorage** - персональные настройки хранятся в Telegram
+- ✅ **Real-time Updates** - WebSocket для мгновенных обновлений
+
+### 🤖 AI Агенты
+- ✅ **11 специализированных агентов** - полная команда для любого проекта
+- ✅ **Orchestrator** - умная декомпозиция проектов на задачи
+- ✅ **HR Agent** - анализ производительности и создание новых агентов
 - ✅ **Параллельное выполнение** - независимые задачи выполняются одновременно
-- ✅ **11 специализированных агентов** - полная команда + HR для управления
-- ✅ **HR Agent (NEW!)** - анализ производительности и создание новых агентов
 - ✅ **Управление зависимостями** - система учитывает связи между задачами
-- ✅ **REST API + WebSocket** - API с Swagger docs + real-time обновления
-- ✅ **Telegram Authentication** - вход через Telegram аккаунт
-- ✅ **Docker deployment** - готово к запуску в контейнерах
-- ✅ **Real-time tracking** - WebSocket для мгновенных обновлений
+
+### 📊 Knowledge Base
+- ✅ **Семантический поиск** - OpenAI embeddings для точного поиска
+- ✅ **Контекстная выдача** - релевантная информация для каждого агента
+- ✅ **Автоматическое сохранение** - результаты работы сохраняются автоматически
+- ✅ **Статистика и аналитика** - отслеживание использования базы знаний
+
+### 🔔 Notifications & Activity
+- ✅ **Activity Feed** - лента событий проектов и задач
+- ✅ **Фильтрация** - по типам (project, task, agent, system)
+- ✅ **Real-time** - мгновенное получение уведомлений
+- ✅ **Навигация** - быстрый переход к связанным проектам
+
+### 📈 Monitoring & Analytics
+- ✅ **Agent Performance** - метрики производительности каждого агента
+- ✅ **Task Visualization** - дерево зависимостей задач
+- ✅ **Progress Tracking** - отслеживание прогресса в real-time
+- ✅ **Execution History** - история выполнения задач
 
 ## 🏗️ Архитектура
 
 ```
-┌─────────────────────────────────────┐
-│   Telegram Mini App (Next.js 15)   │
-│   ┌───────────────────────────┐     │
-│   │  Dashboard, Projects,     │     │
-│   │  Real-time Updates        │     │
-│   └─────────────┬─────────────┘     │
-└─────────────────┼───────────────────┘
+┌─────────────────────────────────────────────┐
+│   TELEGRAM MINI APP (Next.js 14)           │
+│   ┌──────────────────────────────────┐     │
+│   │  • Dashboard с аналитикой         │     │
+│   │  • Projects (List + Details)      │     │
+│   │  • Agent Monitoring               │     │
+│   │  • Knowledge Base (Search+Stats)  │     │
+│   │  • Notifications Feed             │     │
+│   │  • Settings (CloudStorage)        │     │
+│   │  • Bottom Navigation              │     │
+│   │  • Real-time WebSocket            │     │
+│   └─────────────┬────────────────────┘     │
+└─────────────────┼──────────────────────────┘
                   │ HTTPS/WSS
-┌─────────────────▼───────────────────┐
-│   Backend API (FastAPI)             │
-│   ├─ Authentication (Telegram JWT)  │
-│   ├─ REST API + Swagger             │
-│   ├─ WebSocket (Real-time)          │
-│   ├─ Orchestrator + 10 AI Agents    │
-│   └─ Task Execution Engine          │
-└─────────────────┬───────────────────┘
+┌─────────────────▼──────────────────────────┐
+│   BACKEND API (FastAPI)                    │
+│   ├─ Telegram Auth (JWT)                   │
+│   ├─ REST API (35+ endpoints)              │
+│   ├─ WebSocket (Real-time)                 │
+│   ├─ Orchestrator + 11 AI Agents           │
+│   ├─ Task Execution Engine                 │
+│   ├─ Knowledge Base (OpenAI Embeddings)    │
+│   ├─ Notifications API                     │
+│   └─ HR Agent (Meta-management)            │
+└─────────────────┬──────────────────────────┘
                   │
-┌─────────────────▼───────────────────┐
-│   PostgreSQL 17 + Redis 8           │
-└─────────────────────────────────────┘
+┌─────────────────▼──────────────────────────┐
+│   PostgreSQL 17 + Redis 8 + Celery        │
+└────────────────────────────────────────────┘
 ```
 
 ## 🚀 Быстрый старт
@@ -64,6 +94,7 @@ AI Agency - это система из специализированных AI-�
 
 - Docker и Docker Compose
 - Claude API ключ (от Anthropic)
+- OpenAI API ключ (для embeddings)
 - Telegram Bot Token (для Mini App)
 - Python 3.13+ (для локальной разработки)
 - Node.js 20+ и npm 10+ (для frontend разработки)
@@ -83,9 +114,11 @@ cd crauler
 cp .env.example .env
 ```
 
-Отредактируйте `.env` и добавьте ваш Claude API ключ:
+Отредактируйте `.env` и добавьте ваши API ключи:
 ```env
 CLAUDE_API_KEY=your-claude-api-key-here
+OPENAI_API_KEY=your-openai-api-key-here
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
 ```
 
 3. **Запустите проект:**
@@ -119,9 +152,9 @@ make ps
 ```bash
 curl -X POST http://localhost:8000/api/projects \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
-    "description": "Create a landing page for AI consulting company with contact form and blog",
-    "organization_id": "test-org-123"
+    "description": "Create a landing page for AI consulting company with contact form and blog"
   }'
 ```
 
@@ -131,20 +164,29 @@ curl -X POST http://localhost:8000/api/projects \
 3. Нажмите "Try it out"
 4. Введите данные и нажмите "Execute"
 
-### Просмотр проектов
+**Через Telegram Mini App:**
+1. Откройте бота в Telegram
+2. Нажмите "Menu" или запустите Mini App
+3. Перейдите в "Projects" → "New Project"
+4. Опишите проект и нажмите "Create"
+
+### Просмотр проектов и задач
 
 ```bash
 # Получить конкретный проект
-curl http://localhost:8000/api/projects/{project_id}
+curl http://localhost:8000/api/projects/{project_id} \
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 # Список всех проектов
-curl http://localhost:8000/api/projects
+curl http://localhost:8000/api/projects \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Запуск выполнения проекта
 
 ```bash
-curl -X POST http://localhost:8000/api/projects/{project_id}/execute
+curl -X POST http://localhost:8000/api/projects/{project_id}/execute \
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## 🛠️ Команды Make
@@ -169,58 +211,81 @@ make clean          # Удалить контейнеры и volumes
 ai-agency/
 ├── backend/                  # FastAPI Backend
 │   ├── app/
-│   │   ├── agents/          # 10 AI агентов
-│   │   │   ├── base_agent.py
+│   │   ├── agents/          # 11 AI агентов + Orchestrator + HR
 │   │   │   ├── orchestrator.py
 │   │   │   ├── marketing_agent.py
 │   │   │   ├── frontend_agent.py
-│   │   │   └── ... (еще 6 агентов)
+│   │   │   ├── backend_agent.py
+│   │   │   ├── data_analyst_agent.py
+│   │   │   ├── ux_designer_agent.py
+│   │   │   ├── content_writer_agent.py
+│   │   │   ├── mobile_developer_agent.py
+│   │   │   ├── devops_engineer_agent.py
+│   │   │   ├── project_manager_agent.py
+│   │   │   ├── qa_engineer_agent.py
+│   │   │   └── hr_agent.py
+│   │   ├── api/             # REST API (7 modules, 35+ endpoints)
+│   │   │   ├── auth.py      # Telegram Auth & JWT
+│   │   │   ├── projects.py  # Project CRUD & Execution
+│   │   │   ├── tasks.py     # Task Management
+│   │   │   ├── agents.py    # Agent Info
+│   │   │   ├── hr.py        # HR Agent API
+│   │   │   ├── knowledge.py # Knowledge Base
+│   │   │   └── notifications.py # Activity Feed
 │   │   ├── models/          # SQLAlchemy модели
-│   │   │   ├── user.py      # Telegram users
-│   │   │   ├── project.py
-│   │   │   ├── task.py
-│   │   │   └── agent_execution.py
+│   │   │   ├── user.py      # User, UserSettings, Notification
+│   │   │   ├── project.py   # Project
+│   │   │   ├── task.py      # Task
+│   │   │   ├── agent_execution.py
+│   │   │   ├── knowledge.py # KnowledgeEntry, SearchQuery
+│   │   │   └── hr.py        # AgentPerformanceMetric, etc
 │   │   ├── auth/            # Telegram Auth & JWT
-│   │   │   ├── telegram.py
-│   │   │   ├── jwt.py
-│   │   │   └── dependencies.py
 │   │   ├── websockets/      # Real-time updates
-│   │   │   ├── manager.py
-│   │   │   └── routes.py
 │   │   ├── services/        # Business logic
 │   │   │   ├── claude_service.py
-│   │   │   └── agent_executor.py
-│   │   ├── api/             # REST API
-│   │   │   ├── auth.py
-│   │   │   ├── projects.py
-│   │   │   ├── tasks.py
-│   │   │   └── agents.py
+│   │   │   ├── orchestrator_service.py
+│   │   │   └── executor.py
 │   │   ├── database/
 │   │   ├── config.py
 │   │   └── main.py
 │   └── requirements.txt
 ├── frontend/                # Telegram Mini App
 │   ├── app/
-│   │   ├── page.tsx        # Dashboard
+│   │   ├── page.tsx        # Dashboard с аналитикой
 │   │   ├── projects/
 │   │   │   ├── page.tsx    # Projects list
-│   │   │   ├── new/page.tsx
-│   │   │   └── [id]/page.tsx
-│   │   └── layout.tsx
+│   │   │   ├── new/page.tsx # Create project
+│   │   │   └── [id]/page.tsx # Project details + Task Tree
+│   │   ├── agents/
+│   │   │   └── page.tsx    # Agent Monitoring
+│   │   ├── knowledge/
+│   │   │   └── page.tsx    # Knowledge Base (Search + Stats)
+│   │   ├── notifications/
+│   │   │   └── page.tsx    # Activity Feed
+│   │   ├── settings/
+│   │   │   └── page.tsx    # Settings (CloudStorage)
+│   │   └── layout.tsx      # Root layout + BottomNav
 │   ├── components/
-│   │   ├── providers/
-│   │   │   ├── TelegramProvider.tsx
-│   │   │   └── QueryProvider.tsx
+│   │   ├── BottomNav.tsx   # Bottom Navigation
 │   │   ├── ProjectCard.tsx
-│   │   └── StatsCard.tsx
+│   │   ├── StatsCard.tsx
+│   │   ├── QuickActions.tsx
+│   │   ├── ActivityFeed.tsx
+│   │   ├── AgentStatusBadge.tsx
+│   │   ├── TaskTree.tsx    # Dependency visualization
+│   │   ├── KnowledgeSearch.tsx
+│   │   ├── KnowledgeStats.tsx
+│   │   └── providers/
+│   │       ├── TelegramProvider.tsx
+│   │       └── QueryProvider.tsx
 │   ├── lib/
-│   │   ├── api.ts          # API client
+│   │   ├── api.ts          # API client (35+ methods)
 │   │   ├── websocket.ts    # WebSocket client
 │   │   └── utils.ts
 │   └── package.json
 ├── docker/
 ├── docker-compose.yml
-├── IMPLEMENTATION_PLAN.md   # Roadmap
+├── IMPLEMENTATION_PLAN.md
 └── README.md
 ```
 
@@ -245,6 +310,13 @@ cd backend
 uvicorn app.main:app --reload
 ```
 
+4. **Запустите frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 ### Подключение к базе данных
 
 ```bash
@@ -253,19 +325,6 @@ make shell-db
 
 # Или напрямую
 psql postgresql://aiagency:securepassword@localhost:5432/ai_agency
-```
-
-### Просмотр логов
-
-```bash
-# Все логи
-make logs
-
-# Только backend
-make logs-backend
-
-# Только PostgreSQL
-make logs-postgres
 ```
 
 ## 🧪 Тестирование
@@ -277,43 +336,64 @@ make test
 # Или внутри контейнера
 make shell
 pytest
+
+# С покрытием
+pytest --cov=app tests/
 ```
 
 ## 📖 API Документация
 
-### Основные endpoints:
+### Backend API Endpoints
 
-#### Projects
-
-- `POST /api/projects` - Создать проект (анализ + декомпозиция)
-- `GET /api/projects` - Список проектов
-- `GET /api/projects/{project_id}` - Детали проекта с задачами
-- `POST /api/projects/{project_id}/execute` - **Запустить выполнение проекта** ⚡
-
-#### Tasks
-
-- `GET /api/tasks/{task_id}` - Детали задачи
-- `GET /api/tasks/project/{project_id}` - Задачи проекта
-- `POST /api/tasks/{task_id}/execute` - **Выполнить задачу агентом** 🤖
-- `POST /api/tasks/{task_id}/retry` - Повторить failed задачу
-
-#### Agents
-
-- `GET /api/agents` - **Список доступных агентов** 👥
-- `GET /api/agents/{agent_type}` - Информация об агенте
-
-#### Authentication (Telegram Mini App)
-
+#### Authentication (`/api/auth`)
 - `POST /api/auth/telegram` - Аутентификация через Telegram
 - `GET /api/auth/me` - Получить текущего пользователя
 - `POST /api/auth/logout` - Выход
 
-#### WebSocket
+#### Projects (`/api/projects`)
+- `GET /api/projects` - Список проектов
+- `POST /api/projects` - Создать проект (анализ + декомпозиция)
+- `GET /api/projects/{id}` - Детали проекта с задачами
+- `GET /api/projects/{id}/status` - Статус проекта
+- `GET /api/projects/{id}/progress` - Прогресс выполнения
+- `POST /api/projects/{id}/execute` - **Запустить выполнение проекта** ⚡
 
+#### Tasks (`/api/tasks`)
+- `GET /api/tasks/{id}` - Детали задачи
+- `GET /api/tasks/project/{project_id}` - Задачи проекта
+- `POST /api/tasks/{id}/execute` - **Выполнить задачу агентом** 🤖
+- `POST /api/tasks/{id}/retry` - Повторить failed задачу
+
+#### Agents (`/api/agents`)
+- `GET /api/agents` - **Список доступных агентов** 👥
+- `GET /api/agents/{agent_type}` - Информация об агенте
+
+#### HR Agent (`/api/hr`)
+- `GET /api/hr/agents/performance` - Метрики производительности всех агентов
+- `GET /api/hr/agents/{agent_type}/performance` - Метрики конкретного агента
+- `POST /api/hr/agents/{agent_type}/analyze` - Анализ работы агента
+- `POST /api/hr/agents/{agent_type}/suggest-improvements` - Предложения по улучшению
+- `GET /api/hr/improvements` - История улучшений
+- `POST /api/hr/analyze-skill-gaps` - Анализ пробелов в навыках
+- `POST /api/hr/recruit-agent` - Создать нового агента
+- `GET /api/hr/dynamic-agents` - Список динамически созданных агентов
+
+#### Knowledge Base (`/api/knowledge`)
+- `POST /api/knowledge/search` - Семантический поиск
+- `POST /api/knowledge/store` - Сохранить знания
+- `GET /api/knowledge/similar/{entry_id}` - Похожие записи
+- `POST /api/knowledge/context` - Контекст для агента
+- `POST /api/knowledge/suggest-projects` - Предложения проектов
+- `GET /api/knowledge/stats` - Статистика базы знаний
+
+#### Notifications (`/api/notifications`)
+- `GET /api/notifications` - Лента активности (с фильтрацией)
+- `GET /api/notifications/unread-count` - Счётчик непрочитанных
+
+#### WebSocket (`/ws`)
 - `WS /ws?token=JWT` - WebSocket подключение для real-time updates
 
 #### Health
-
 - `GET /` - Информация о сервисе
 - `GET /health` - Health check
 
@@ -322,25 +402,57 @@ pytest
 
 ## 📱 Telegram Mini App
 
-### Запуск Frontend
+### Frontend Pages
 
-1. **Установите зависимости:**
-```bash
-cd frontend
-npm install
-```
+1. **Dashboard (`/`)** - Главная страница с аналитикой
+   - Статистика проектов
+   - Quick Actions
+   - Activity Feed
+   - Agent Status
 
-2. **Создайте .env файл:**
-```bash
-cp .env.example .env.local
-```
+2. **Projects (`/projects`)** - Список проектов
+   - Фильтрация и сортировка
+   - Статус проектов
+   - Быстрый доступ к деталям
 
-3. **Запустите dev сервер:**
-```bash
-npm run dev
-```
+3. **Project Details (`/projects/[id]`)** - Детали проекта
+   - Task Tree с зависимостями
+   - Progress tracking
+   - Agent assignments
+   - Execution controls
 
-Frontend будет доступен на http://localhost:3000
+4. **New Project (`/projects/new`)** - Создание проекта
+   - AI-powered форма
+   - Auto-decomposition
+
+5. **Agents (`/agents`)** - Мониторинг агентов
+   - Performance metrics
+   - Success rates
+   - Task history
+
+6. **Knowledge Base (`/knowledge`)** - База знаний
+   - Семантический поиск
+   - Статистика использования
+   - Tabs: Search / Stats
+
+7. **Notifications (`/notifications`)** - Лента активности
+   - Фильтрация по типам
+   - Real-time updates
+   - Quick navigation
+
+8. **Settings (`/settings`)** - Настройки
+   - Telegram CloudStorage
+   - Notification preferences
+   - User profile
+   - Theme sync
+
+### Telegram Features
+
+- **CloudStorage** - настройки хранятся в Telegram
+- **Theme Integration** - автоматическая синхронизация темы
+- **BackButton** - навигация назад
+- **MainButton** - контекстные действия
+- **Haptic Feedback** - тактильные отклики
 
 ### Настройка Telegram Bot
 
@@ -372,45 +484,26 @@ TELEGRAM_BOT_TOKEN=your_bot_token_here
 -> URL: https://your-vercel-app.vercel.app
 ```
 
-### Deploy Frontend (Vercel)
-
-1. Push код в GitHub
-2. Импортируйте проект в [Vercel](https://vercel.com)
-3. Настройте Environment Variables:
-```
-NEXT_PUBLIC_API_URL=https://api.your-domain.com
-NEXT_PUBLIC_WS_URL=wss://api.your-domain.com
-```
-4. Deploy!
-
-Подробнее см. [frontend/README.md](frontend/README.md)
-
 ## 🎨 Примеры использования
 
 ### Пример 1: Landing Page
-
 ```json
 {
-  "description": "Create a modern landing page for AI SaaS product with pricing, features, and contact form",
-  "organization_id": "my-org"
+  "description": "Create a modern landing page for AI SaaS product with pricing, features, and contact form"
 }
 ```
 
 ### Пример 2: Mobile App
-
 ```json
 {
-  "description": "Build a React Native expense tracker app with categories, charts, and cloud sync",
-  "organization_id": "my-org"
+  "description": "Build a React Native expense tracker app with categories, charts, and cloud sync"
 }
 ```
 
 ### Пример 3: Marketing Campaign
-
 ```json
 {
-  "description": "Develop a 3-month marketing campaign for B2B SaaS launch including content strategy and SEO",
-  "organization_id": "my-org"
+  "description": "Develop a 3-month marketing campaign for B2B SaaS launch including content strategy and SEO"
 }
 ```
 
@@ -446,72 +539,71 @@ make build-up
 - Проверьте баланс вашего аккаунта Anthropic
 - Проверьте логи: `make logs-backend`
 
+## 🚀 Deployment
+
+### Backend (Railway/Render/Fly.io)
+
+1. Push код в GitHub
+2. Подключите репозиторий к платформе
+3. Настройте Environment Variables:
+```
+CLAUDE_API_KEY=...
+OPENAI_API_KEY=...
+DATABASE_URL=...
+REDIS_URL=...
+TELEGRAM_BOT_TOKEN=...
+```
+
+### Frontend (Vercel)
+
+1. Push код в GitHub
+2. Импортируйте проект в [Vercel](https://vercel.com)
+3. Настройте Environment Variables:
+```
+NEXT_PUBLIC_API_URL=https://api.your-domain.com
+NEXT_PUBLIC_WS_URL=wss://api.your-domain.com
+```
+4. Deploy!
+
+## 📊 Текущий статус
+
+### ✅ Полностью реализовано
+- 11 AI агентов + Orchestrator + HR Agent
+- 8 страниц Telegram Mini App
+- 35+ API endpoints
+- Real-time WebSocket updates
+- Knowledge Base с OpenAI embeddings
+- Agent Performance Monitoring
+- Task Dependency Visualization
+- Notifications API
+- CloudStorage Integration
+- Bottom Navigation
+- Telegram Theme Sync
+
+### 🔜 Roadmap
+- [ ] A/B тестирование конфигураций агентов
+- [ ] Автоматическое применение улучшений
+- [ ] Обучение агентов на основе feedback
+- [ ] Multi-tenant support
+- [ ] Advanced analytics dashboard
+
 ## 📄 Лицензия
 
 MIT License
 
 ## 👥 Авторы
 
-Разработано на базе Claude API (Anthropic)
+Разработано на базе Claude API (Anthropic) и OpenAI Embeddings
 
 ## 🔗 Ссылки
 
 - [Claude API Documentation](https://docs.anthropic.com/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Docker Documentation](https://docs.docker.com/)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Telegram Mini Apps](https://core.telegram.org/bots/webapps)
 
 ---
 
-**Готово к запуску!** 🚀
+**Production Ready!** 🚀
 
 Если у вас есть вопросы или проблемы, создайте issue в репозитории.
-
-
-## 🔮 Roadmap
-
-### Phase 3: HR Agent ✅ MVP Complete!
-
-Специальный мета-агент для управления и развития команды AI агентов:
-
-#### ✅ Реализовано (MVP):
-- 📊 **Анализ производительности** - метрики для каждого агента
-- 🎯 **Предложения по улучшению** - AI-анализ и рекомендации
-- 🔍 **Определение пробелов** - анализ нехватки навыков
-- 🤖 **Создание новых агентов** - динамическая генерация агентов
-- 📈 **API endpoints** - полный REST API для HR функционала
-- 💾 **Database models** - таблицы для аналитики и улучшений
-
-#### ⏳ В разработке (Advanced):
-- 🧪 A/B тестирование конфигураций
-- 🔄 Автоматическое применение улучшений
-- 📊 Dashboard для визуализации метрик
-- 🎓 Обучение агентов на основе feedback
-
-#### 🔜 Запланировано (Expert):
-- 🤖 Машинное обучение для оптимизации
-- 🚀 Автономное управление командой
-- 📈 Предиктивная аналитика потребностей
-- 🌐 Multi-tenant agent management
-
-**Подробнее:** См. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) - Phase 3
-
-### API Endpoints для HR Agent:
-
-```bash
-# Анализ производительности
-GET  /api/hr/agents/performance
-GET  /api/hr/agents/{agent_type}/performance
-POST /api/hr/agents/{agent_type}/analyze
-
-# Улучшения
-POST /api/hr/agents/{agent_type}/suggest-improvements
-GET  /api/hr/improvements
-
-# Создание агентов
-POST /api/hr/analyze-skill-gaps
-POST /api/hr/recruit-agent
-GET  /api/hr/dynamic-agents
-```
-
----
-
