@@ -283,8 +283,7 @@ class TaskExecutor:
             id=uuid4(),
             task_id=task.id,
             agent_type=task.assigned_agent,
-            status="in_progress",
-            started_at=datetime.utcnow()
+            status="in_progress"
         )
 
         db.add(execution)
@@ -303,9 +302,9 @@ class TaskExecutor:
     ):
         """Update execution record with results."""
         execution.status = "completed"
-        execution.completed_at = datetime.utcnow()
-        execution.result = result
+        execution.response = result.get("response", "")
         execution.tokens_used = result.get("tokens_used", 0)
+        execution.execution_metadata = result
 
         await db.commit()
         await db.refresh(execution)
