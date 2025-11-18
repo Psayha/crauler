@@ -91,7 +91,7 @@ async def test_execute_task_success(task_executor, sample_task, db_engine):
     from app.database.connection import get_db
 
     # Mock agent execution
-    with patch("app.agents.registry.get_agent") as mock_get_agent:
+    with patch("app.services.executor.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
         mock_agent.execute_task.return_value = {
             "status": "success",
@@ -185,7 +185,7 @@ async def test_execute_task_with_dependencies_met(
         await db.refresh(task)
 
         # Mock agent
-        with patch("app.agents.registry.get_agent") as mock_get_agent:
+        with patch("app.services.executor.get_agent") as mock_get_agent:
             mock_agent = AsyncMock()
             mock_agent.execute_task.return_value = {
                 "status": "success",
@@ -249,7 +249,7 @@ async def test_execute_task_with_retry(task_executor, sample_task, db_engine):
     from app.database.connection import get_db
 
     # Mock agent to fail twice, then succeed
-    with patch("app.agents.registry.get_agent") as mock_get_agent:
+    with patch("app.services.executor.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
         mock_agent.execute_task.side_effect = [
             {
@@ -289,7 +289,7 @@ async def test_execute_task_max_retries_exceeded(task_executor, sample_task, db_
     from app.database.connection import get_db
 
     # Mock agent to always fail
-    with patch("app.agents.registry.get_agent") as mock_get_agent:
+    with patch("app.services.executor.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
         mock_agent.execute_task.return_value = {
             "status": "failed",
@@ -320,7 +320,7 @@ async def test_execute_task_agent_not_found(task_executor, sample_task, db_engin
         task.assigned_agent = "nonexistent_agent"
         await db.commit()
 
-    with patch("app.agents.registry.get_agent", return_value=None):
+    with patch("app.services.executor.get_agent", return_value=None):
         async with get_db() as db:
             with pytest.raises(TaskExecutionError, match="Agent .* not found"):
                 await task_executor.execute_task(sample_task.id, db)
@@ -350,7 +350,7 @@ async def test_execute_task_batch_parallel(task_executor, sample_project, db_eng
         await db.commit()
 
         # Mock agent
-        with patch("app.agents.registry.get_agent") as mock_get_agent:
+        with patch("app.services.executor.get_agent") as mock_get_agent:
             mock_agent = AsyncMock()
             mock_agent.execute_task.return_value = {
                 "status": "success",
@@ -396,7 +396,7 @@ async def test_execute_task_batch_sequential(task_executor, sample_project, db_e
         await db.commit()
 
         # Mock agent
-        with patch("app.agents.registry.get_agent") as mock_get_agent:
+        with patch("app.services.executor.get_agent") as mock_get_agent:
             mock_agent = AsyncMock()
             mock_agent.execute_task.return_value = {
                 "status": "success",
@@ -446,7 +446,7 @@ async def test_execution_record_created(task_executor, sample_task, db_engine):
     from app.database.connection import get_db
     from sqlalchemy import select
 
-    with patch("app.agents.registry.get_agent") as mock_get_agent:
+    with patch("app.services.executor.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
         mock_agent.execute_task.return_value = {
             "status": "success",
@@ -499,7 +499,7 @@ async def test_task_status_transitions(task_executor, sample_task, db_engine):
             "metadata": {}
         }
 
-    with patch("app.agents.registry.get_agent") as mock_get_agent:
+    with patch("app.services.executor.get_agent") as mock_get_agent:
         mock_agent = AsyncMock()
         mock_agent.execute_task = mock_execute_task
         mock_get_agent.return_value = mock_agent
