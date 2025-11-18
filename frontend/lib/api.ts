@@ -176,6 +176,13 @@ class ApiClient {
     return response.data;
   }
 
+  async getAgentsPerformance(timePeriod: string = "30d") {
+    const response = await this.client.get("/api/hr/agents/performance", {
+      params: { time_period: timePeriod },
+    });
+    return response.data;
+  }
+
   async analyzeAgent(agentType: string) {
     const response = await this.client.post(`/api/hr/agents/${agentType}/analyze`);
     return response.data;
