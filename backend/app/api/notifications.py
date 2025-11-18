@@ -4,7 +4,7 @@ from sqlalchemy import select, desc
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from app.database.session import get_db
+from app.database.connection import get_db
 from app.models.project import Project, Task, AgentExecution
 from app.auth.dependencies import get_current_user
 from app.models.user import User
