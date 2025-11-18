@@ -16,7 +16,7 @@ from app.agents.data_analyst_agent import DataAnalystAgent
 from app.agents.ux_designer_agent import UXDesignerAgent
 from app.agents.content_writer_agent import ContentWriterAgent
 from app.agents.mobile_developer_agent import MobileDeveloperAgent
-from app.agents.devops_agent import DevOpsEngineerAgent
+from app.agents.devops_engineer_agent import DevOpsEngineerAgent
 from app.agents.project_manager_agent import ProjectManagerAgent
 from app.agents.qa_engineer_agent import QAEngineerAgent
 from app.agents.hr_agent import HRAgent
